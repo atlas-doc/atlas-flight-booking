@@ -77,7 +77,8 @@ class PreProductionAccessInfos(ApiModel):
 
 
 class ProductionAccessInfos(ApiModel):
-    items: list[AccessCredentialRecord]
+    sandbox: list[AccessCredentialRecord] = Field(default_factory=list)
+    prd: list[AccessCredentialRecord] = Field(default_factory=list)
     request_id: str | None = None
 
 

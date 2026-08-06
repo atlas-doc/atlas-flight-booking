@@ -24,7 +24,7 @@ def record(label: str, *, client_code: str | None = "CLIENT") -> AccessCredentia
 class FakeAccessApi:
     access: AccessInfo
     preproduction: PreProductionAccessInfos
-    production: ProductionAccessInfos = field(default_factory=lambda: ProductionAccessInfos(items=[]))
+    production: ProductionAccessInfos = field(default_factory=ProductionAccessInfos)
     events: list[str] = field(default_factory=list)
 
     def check_access_info(self, jwt: str) -> AccessInfo:
@@ -81,7 +81,10 @@ def make_access_manager(*, activation_status: int, top_up_completed: bool) -> Ac
                 access_info_exists=False,
             ),
             preproduction=preproduction(),
-            production=ProductionAccessInfos(items=[record("product")]),
+            production=ProductionAccessInfos(
+                prd=[record("product")],
+                sandbox=[record("box", client_code=None)],
+            ),
         ),
         FakeAccessSecrets(),
     )
@@ -143,7 +146,7 @@ def test_bounded_transaction_access_passes_decreasing_remaining_time_to_each_con
             super().__init__(
                 access=AccessInfo(activation_status=3, top_up_completed=True, access_info_exists=True),
                 preproduction=preproduction(),
-                production=ProductionAccessInfos(items=[record("product")]),
+                production=ProductionAccessInfos(prd=[record("product")]),
             )
             self.timeouts: list[float] = []
 
@@ -153,15 +156,6 @@ def test_bounded_transaction_access_passes_decreasing_remaining_time_to_each_con
             self.timeouts.append(timeout_seconds)
             now += 2
             return super().check_access_info(jwt)
-
-        def get_preproduction_access_infos(
-            self, jwt: str, *, timeout_seconds: float | None = None
-        ) -> PreProductionAccessInfos:
-            nonlocal now
-            assert timeout_seconds is not None
-            self.timeouts.append(timeout_seconds)
-            now += 3
-            return super().get_preproduction_access_infos(jwt)
 
         def get_or_create_production_access_infos(
             self, jwt: str, *, timeout_seconds: float | None = None
@@ -179,7 +173,7 @@ def test_bounded_transaction_access_passes_decreasing_remaining_time_to_each_con
     )
 
     assert access.route.operation is BusinessOperation.QUERY_ORDER
-    assert api.timeouts == [10, 8, 5]
+    assert api.timeouts == [10, 8]
 
 
 def test_bounded_transaction_access_does_not_start_a_control_request_after_deadline() -> None:
@@ -191,7 +185,7 @@ def test_bounded_transaction_access_does_not_start_a_control_request_after_deadl
                 access=AccessInfo(activation_status=3, top_up_completed=True, access_info_exists=True),
                 preproduction=preproduction(),
             )
-            self.preproduction_calls = 0
+            self.production_calls = 0
 
         def check_access_info(self, jwt: str, *, timeout_seconds: float | None = None) -> AccessInfo:
             nonlocal now
@@ -199,11 +193,11 @@ def test_bounded_transaction_access_does_not_start_a_control_request_after_deadl
             now += 5
             return super().check_access_info(jwt)
 
-        def get_preproduction_access_infos(
+        def get_or_create_production_access_infos(
             self, jwt: str, *, timeout_seconds: float | None = None
-        ) -> PreProductionAccessInfos:
+        ) -> ProductionAccessInfos:
             del jwt, timeout_seconds
-            self.preproduction_calls += 1
+            self.production_calls += 1
             raise AssertionError("control request must not begin after its deadline")
 
     api = DeadlineConsumingApi()
@@ -214,7 +208,7 @@ def test_bounded_transaction_access_does_not_start_a_control_request_after_deadl
         )
 
     assert raised.value.code == "SERVICE_TEMPORARILY_UNAVAILABLE"
-    assert api.preproduction_calls == 0
+    assert api.production_calls == 0
 
 
 def test_ineligible_transaction_with_missing_search_credential_requires_subscription() -> None:
@@ -257,8 +251,30 @@ def test_pre_sale_fetches_grouped_credentials_without_creating_production() -> N
     assert secrets.credentials.sandbox is not None
 
 
-@pytest.mark.parametrize("activation_status", [2, 3, 4])
-def test_non_pre_sale_gets_or_creates_production_even_when_access_info_is_absent(
+def test_live_gets_or_creates_production_even_when_access_info_is_absent() -> None:
+    api = FakeAccessApi(
+        access=AccessInfo(
+            activation_status=3,
+            top_up_completed=False,
+            access_info_exists=False,
+        ),
+        preproduction=preproduction(),
+        production=ProductionAccessInfos(
+            prd=[record("prod")],
+            sandbox=[record("box", client_code=None)],
+        ),
+    )
+    secrets = FakeAccessSecrets()
+
+    access = make_manager(api, secrets).resolve_search_access("jwt-" + "value")
+
+    assert api.events == ["access_checked", "production_fetched"]
+    assert access.route.credential_slot is CredentialSlot.PRODUCTION
+    assert access.credential.ak == "prod-" + "ak"
+
+
+@pytest.mark.parametrize("activation_status", [1, 2, 4])
+def test_non_live_fetches_preproduction_fare_search_credentials(
     activation_status: int,
 ) -> None:
     api = FakeAccessApi(
@@ -268,15 +284,17 @@ def test_non_pre_sale_gets_or_creates_production_even_when_access_info_is_absent
             access_info_exists=False,
         ),
         preproduction=preproduction(),
-        production=ProductionAccessInfos(items=[record("prod")]),
+        production=ProductionAccessInfos(
+            prd=[record("must-not-use")],
+            sandbox=[record("must-not-use-box")],
+        ),
     )
-    secrets = FakeAccessSecrets()
 
-    access = make_manager(api, secrets).resolve_search_access("jwt-" + "value")
+    access = make_manager(api, FakeAccessSecrets()).resolve_search_access("jwt-" + "value")
 
-    assert api.events == ["access_checked", "preproduction_fetched", "production_fetched"]
-    assert access.route.credential_slot is CredentialSlot.PRODUCTION
-    assert access.credential.ak == "prod-" + "ak"
+    assert api.events == ["access_checked", "preproduction_fetched"]
+    assert access.route.credential_slot is CredentialSlot.PRE
+    assert access.credential.ak == "pre-" + "ak"
 
 
 def test_first_complete_production_item_is_selected_and_saved_before_return() -> None:
@@ -284,7 +302,7 @@ def test_first_complete_production_item_is_selected_and_saved_before_return() ->
         access=AccessInfo(activation_status=3, top_up_completed=True, access_info_exists=False),
         preproduction=preproduction(),
         production=ProductionAccessInfos(
-            items=[
+            prd=[
                 AccessCredentialRecord(clientCode="SKIP", ak="", sk="missing-" + "ak"),
                 AccessCredentialRecord(clientCode="USE", ak="selected-" + "ak", sk="selected-" + "sk"),
                 record("later"),
@@ -342,7 +360,10 @@ def test_snapshot_ticketing_capability_depends_only_on_live_and_top_up(
             access_info_exists=False,
         ),
         preproduction=preproduction(),
-        production=ProductionAccessInfos(items=[record("prod")]),
+        production=ProductionAccessInfos(
+            prd=[record("prod")],
+            sandbox=[record("box", client_code=None)],
+        ),
     )
 
     snapshot = make_manager(api, FakeAccessSecrets()).synchronize("jwt-" + "value")
@@ -357,9 +378,7 @@ def test_sandbox_search_uses_grouped_credential_without_exposing_it_in_snapshot(
         preproduction=preproduction(),
     )
 
-    access = make_manager(api, FakeAccessSecrets(), mode=CustomerMode.SANDBOX).resolve_search_access(
-        "jwt-" + "value"
-    )
+    access = make_manager(api, FakeAccessSecrets(), mode=CustomerMode.SANDBOX).resolve_search_access("jwt-" + "value")
 
     assert access.route.credential_slot is CredentialSlot.SANDBOX
     assert access.credential.ak == "box-" + "ak"
@@ -382,6 +401,27 @@ def test_sandbox_transaction_uses_sandbox_credential_without_subscription_gate()
     assert access.route.credential_slot is CredentialSlot.SANDBOX
     assert access.credential.ak == "box-" + "ak"
     assert api.events == ["access_checked", "preproduction_fetched"]
+
+
+def test_live_sandbox_uses_sandbox_credential_from_production_response() -> None:
+    api = FakeAccessApi(
+        access=AccessInfo(activation_status=3, top_up_completed=True, access_info_exists=True),
+        preproduction=preproduction(),
+        production=ProductionAccessInfos(
+            prd=[record("prod")],
+            sandbox=[record("live-box", client_code="CLIENT")],
+        ),
+    )
+
+    access = make_manager(
+        api,
+        FakeAccessSecrets(),
+        mode=CustomerMode.SANDBOX,
+    ).resolve_transaction_access("jwt-" + "value", BusinessOperation.ORDER)
+
+    assert access.route.credential_slot is CredentialSlot.SANDBOX
+    assert access.credential.ak == "live-box-" + "ak"
+    assert api.events == ["access_checked", "production_fetched"]
 
 
 def test_sandbox_snapshot_exposes_transaction_capability_without_environment_details() -> None:

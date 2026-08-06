@@ -82,7 +82,7 @@ class EndpointResolver:
             provider = SearchProvider.STANDARD
             credential_slot = CredentialSlot.SANDBOX
             bookable = True
-        elif activation_status == 1:
+        elif activation_status != 3:
             base_url = self._settings.prod_api_base_url.rstrip("/")
             path = "/priceCompareSearch.do"
             provider = SearchProvider.FARE_COMPARE

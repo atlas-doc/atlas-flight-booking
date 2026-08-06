@@ -157,10 +157,14 @@ class AtlasApiClient:
             protected=True,
         )
         try:
-            records = access_credential_records_adapter.validate_python(envelope.data)
+            if isinstance(envelope.data, list):
+                records = access_credential_records_adapter.validate_python(envelope.data)
+                parsed = ProductionAccessInfos(prd=records)
+            else:
+                parsed = ProductionAccessInfos.model_validate(envelope.data)
         except ValidationError:
             self._raise_invalid_response(envelope.uuid)
-        return ProductionAccessInfos(items=records, request_id=envelope.uuid)
+        return parsed.model_copy(update={"request_id": envelope.uuid})
 
     def get_fare_search_usage(self, jwt: str) -> FareSearchUsage:
         envelope, _ = self._request(

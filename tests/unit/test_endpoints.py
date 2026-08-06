@@ -13,13 +13,13 @@ def settings() -> InternalSettings:
     )
 
 
-def test_prod_search_route_depends_only_on_pre_sale_status() -> None:
+def test_prod_search_route_uses_standard_search_only_for_live_status() -> None:
     resolver = EndpointResolver(settings())
     expected = {
         1: ("fare_compare", "/priceCompareSearch.do", "pre"),
-        2: ("standard", "/search.do", "production"),
+        2: ("fare_compare", "/priceCompareSearch.do", "pre"),
         3: ("standard", "/search.do", "production"),
-        4: ("standard", "/search.do", "production"),
+        4: ("fare_compare", "/priceCompareSearch.do", "pre"),
     }
 
     actual = {

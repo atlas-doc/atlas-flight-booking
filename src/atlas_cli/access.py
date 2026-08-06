@@ -185,22 +185,24 @@ class AccessManager:
             if access_timeout is None
             else self._api.check_access_info(jwt, timeout_seconds=access_timeout)
         )
-        preproduction_timeout = self._remaining_timeout(deadline, monotonic)
-        grouped = (
-            self._api.get_preproduction_access_infos(jwt)
-            if preproduction_timeout is None
-            else self._api.get_preproduction_access_infos(jwt, timeout_seconds=preproduction_timeout)
-        )
         existing = self._secrets.load_api_credentials() or ApiCredentials()
-        credentials = existing.model_copy(
-            update={
-                "pre": self._first_complete(grouped.pre) or existing.pre,
-                "sandbox": self._first_complete(grouped.sandbox) or existing.sandbox,
-            }
-        )
-
-        request_id = grouped.request_id or access.request_id
-        if mode is CustomerMode.PROD and access.activation_status != 1:
+        credentials = existing
+        request_id = access.request_id
+        if access.activation_status != 3:
+            preproduction_timeout = self._remaining_timeout(deadline, monotonic)
+            grouped = (
+                self._api.get_preproduction_access_infos(jwt)
+                if preproduction_timeout is None
+                else self._api.get_preproduction_access_infos(jwt, timeout_seconds=preproduction_timeout)
+            )
+            credentials = existing.model_copy(
+                update={
+                    "pre": self._first_complete(grouped.pre) or existing.pre,
+                    "sandbox": self._first_complete(grouped.sandbox) or existing.sandbox,
+                }
+            )
+            request_id = grouped.request_id or request_id
+        else:
             production_timeout = self._remaining_timeout(deadline, monotonic)
             production = (
                 self._api.get_or_create_production_access_infos(jwt)
@@ -208,7 +210,10 @@ class AccessManager:
                 else self._api.get_or_create_production_access_infos(jwt, timeout_seconds=production_timeout)
             )
             credentials = credentials.model_copy(
-                update={"production": self._first_complete(production.items) or existing.production}
+                update={
+                    "production": self._first_complete(production.prd) or existing.production,
+                    "sandbox": self._first_complete(production.sandbox) or existing.sandbox,
+                }
             )
             request_id = production.request_id or request_id
 

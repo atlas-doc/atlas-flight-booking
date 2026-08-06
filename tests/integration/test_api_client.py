@@ -300,8 +300,50 @@ def test_get_or_create_production_access_infos_posts_and_maps_array() -> None:
 
     result = client_with_handler(handler).get_or_create_production_access_infos("jwt-value")
 
-    assert result.items[0].ak == production_ak
-    assert result.items[0].sk == production_sk
+    assert result.prd[0].ak == production_ak
+    assert result.prd[0].sk == production_sk
+    assert result.sandbox == []
+    assert result.request_id == "req-1"
+
+
+def test_get_or_create_production_access_infos_maps_grouped_credentials() -> None:
+    production_ak = "prod-" + "ak"
+    production_sk = "prod-" + "sk"
+    sandbox_ak = "box-" + "ak"
+    sandbox_sk = "box-" + "sk"
+    client_code = "CLIENT"
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.method == "POST"
+        assert request.url.path == "/cli/production/access-info"
+        return httpx.Response(
+            200,
+            json=envelope(
+                {
+                    "sandbox": [
+                        {
+                            "clientCode": client_code,
+                            "ak": sandbox_ak,
+                            "sk": sandbox_sk,
+                            "expiryDate": None,
+                        }
+                    ],
+                    "prd": [
+                        {
+                            "clientCode": client_code,
+                            "ak": production_ak,
+                            "sk": production_sk,
+                            "expiryDate": "2036-08-04 15:04:03",
+                        }
+                    ],
+                }
+            ),
+        )
+
+    result = client_with_handler(handler).get_or_create_production_access_infos("jwt-value")
+
+    assert result.prd[0].ak == production_ak
+    assert result.sandbox[0].sk == sandbox_sk
     assert result.request_id == "req-1"
 
 
