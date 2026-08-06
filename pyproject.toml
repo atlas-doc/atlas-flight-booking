@@ -32,10 +32,12 @@ dependencies = [
 atlas-flight = "atlas_cli.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/atlas-doc/atlas-flight-booking"
+Homepage = "https://atlaslovestravel.com/?utm=skill"
 Documentation = "https://github.com/atlas-doc/atlas-flight-booking#readme"
 Issues = "https://github.com/atlas-doc/atlas-flight-booking/issues"
 Repository = "https://github.com/atlas-doc/atlas-flight-booking.git"
+X = "https://x.com/AtlasLCC"
+LinkedIn = "https://www.linkedin.com/company/atlaslovestravel/"
 
 [dependency-groups]
 dev = [

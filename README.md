@@ -1,4 +1,20 @@
-# Atlas Flight Booking
+<div align="center">
+  <a href="https://atlaslovestravel.com/?utm=skill">
+    <img src="assets/atlas-logo.svg" alt="Atlas" width="180">
+  </a>
+  <h1>Atlas Flight Booking</h1>
+  <p>Agent-friendly live flight search and booking.</p>
+  <p>
+    <a href="https://github.com/atlas-doc/atlas-flight-booking/releases/latest"><img src="https://img.shields.io/github/v/release/atlas-doc/atlas-flight-booking?label=release" alt="Latest release"></a>
+    <a href="https://github.com/atlas-doc/atlas-flight-booking/stargazers"><img src="https://img.shields.io/github/stars/atlas-doc/atlas-flight-booking?style=flat" alt="GitHub stars"></a>
+    <a href="LICENSE"><img src="https://img.shields.io/github/license/atlas-doc/atlas-flight-booking" alt="Apache 2.0 license"></a>
+  </p>
+  <p>
+    <a href="https://atlaslovestravel.com/?utm=skill"><img src="https://img.shields.io/badge/Website-atlaslovestravel.com-ffcd0a?labelColor=336699" alt="Atlas website"></a>
+    <a href="https://x.com/AtlasLCC"><img src="https://img.shields.io/badge/X-@AtlasLCC-000000?logo=x&amp;logoColor=white" alt="Atlas on X"></a>
+    <a href="https://www.linkedin.com/company/atlaslovestravel/"><img src="https://img.shields.io/badge/LinkedIn-Atlas-0A66C2?logo=linkedin&amp;logoColor=white" alt="Atlas on LinkedIn"></a>
+  </p>
+</div>
 
 [中文](README.zh-CN.md)
 
