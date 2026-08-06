@@ -15,7 +15,7 @@ from atlas_cli.booking_store import BookingStore, BookingStoreError
 from atlas_cli.business_client import AtlasBusinessClient, BusinessApiError, BusinessResponse
 from atlas_cli.business_status import BookingApiError, BusinessStage, booking_error_result, map_business_status
 from atlas_cli.endpoints import BusinessOperation, BusinessRoute
-from atlas_cli.models import CommandResult
+from atlas_cli.models import CommandResult, CommandStatus, action_required_result
 from atlas_cli.secure_store import ApiCredential, Credentials, SecureStoreError
 from atlas_cli.ticketing import TicketingService
 
@@ -129,16 +129,16 @@ class PaymentService:
                     if error.upstream_status in _PROCESSING_PAYMENT_STATUSES
                     else PaymentState.UNKNOWN
                 )
-                return self._recover(order.order_no, state)
+                return self._recover(order.order_no, state, locator)
             self._update_payment_best_effort(order.order_no, PaymentState.UNKNOWN)
             return booking_error_result(error, data=locator)
         except BusinessApiError:
-            return self._recover(order.order_no, PaymentState.UNKNOWN)
+            return self._recover(order.order_no, PaymentState.UNKNOWN, locator)
 
         if submission.order_no != order.order_no:
-            return self._recover(order.order_no, PaymentState.UNKNOWN)
+            return self._recover(order.order_no, PaymentState.UNKNOWN, locator)
         self._update_payment_best_effort(order.order_no, PaymentState.SUBMITTED)
-        return self._ticketing.poll(order.order_no, timeout_seconds=120.0)
+        return self._poll_after_payment(order.order_no, locator)
 
     def _resolve_access(self) -> tuple[TransactionAccess | None, CommandResult | None]:
         try:
@@ -163,9 +163,29 @@ class PaymentService:
             or error.side_effect_uncertain
         )
 
-    def _recover(self, order_no: str, state: PaymentState) -> CommandResult:
+    def _recover(
+        self,
+        order_no: str,
+        state: PaymentState,
+        locator: dict[str, object],
+    ) -> CommandResult:
         self._update_payment_best_effort(order_no, state)
-        return self._ticketing.poll(order_no, timeout_seconds=120.0)
+        return self._poll_after_payment(order_no, locator)
+
+    def _poll_after_payment(
+        self,
+        order_no: str,
+        locator: dict[str, object],
+    ) -> CommandResult:
+        result = self._ticketing.poll(order_no, timeout_seconds=120.0)
+        if result.status is not CommandStatus.RETRYABLE_ERROR and not result.retryable:
+            return result
+        return action_required_result(
+            "PAYMENT_STATUS_UNKNOWN",
+            "Payment status could not be confirmed",
+            request_id=result.request_id,
+            data={**result.data, **locator},
+        )
 
     def _update_payment_best_effort(self, order_no: str, state: PaymentState) -> None:
         with suppress(Exception):

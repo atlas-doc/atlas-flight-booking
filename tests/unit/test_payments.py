@@ -23,7 +23,13 @@ from atlas_cli.booking_store import BookingStore, BookingStoreError
 from atlas_cli.business_client import BusinessApiError, BusinessResponse
 from atlas_cli.durable_io import durable_replace as real_durable_replace
 from atlas_cli.endpoints import BusinessOperation, BusinessRoute, CredentialSlot
-from atlas_cli.models import CommandResult, action_required_result, success_result
+from atlas_cli.models import (
+    CommandResult,
+    CommandStatus,
+    action_required_result,
+    retryable_error_result,
+    success_result,
+)
 from atlas_cli.payments import PaymentAdapter, PaymentService
 from atlas_cli.secure_store import ApiCredential, Credentials
 from tests.fake_workflow_store import FakeWorkflowSecretStore
@@ -388,6 +394,48 @@ def test_confirmation_cannot_be_reused_even_after_transport_timeout() -> None:
     assert len(business.requests) == 1
     assert len(ticketing.poll_calls) == 1
     assert store.updates == [PaymentState.UNKNOWN]
+
+
+@pytest.mark.parametrize("pay_transport_uncertain", [False, True])
+def test_retryable_status_query_after_payment_is_non_retryable_unknown(
+    pay_transport_uncertain: bool,
+) -> None:
+    ticketing = Ticketing(
+        retryable_error_result(
+            "SERVICE_TEMPORARILY_UNAVAILABLE",
+            "Service temporarily unavailable",
+            request_id="req-query-safe",
+            data={"order_no": ORDER_NO},
+        )
+    )
+    business_error = (
+        BusinessApiError(
+            code="SERVICE_TEMPORARILY_UNAVAILABLE",
+            message="Service temporarily unavailable",
+            retryable=True,
+        )
+        if pay_transport_uncertain
+        else None
+    )
+    service, business, _, store, _ = make_payment_service(
+        business_error=business_error,
+        ticketing=ticketing,
+    )
+
+    result = service.pay("paycfm_1")
+
+    assert result.status is CommandStatus.ACTION_REQUIRED
+    assert result.code == "PAYMENT_STATUS_UNKNOWN"
+    assert result.message == "Payment status could not be confirmed"
+    assert result.retryable is False
+    assert result.request_id == "req-query-safe"
+    assert result.data == {
+        "order_no": ORDER_NO,
+        "order_url": f"https://www.atriptech.com/#/order/detail/{ORDER_NO}/en",
+    }
+    assert business.requests == [{"orderNo": ORDER_NO, "paymentMethod": 1}]
+    assert ticketing.poll_calls == [(ORDER_NO, 120.0)]
+    assert store.consumed is True
 
 
 @pytest.mark.parametrize("response_order_no", ["UNEXPECTED-ORDER", "", None])
