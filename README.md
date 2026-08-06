@@ -45,6 +45,8 @@ npx --yes skills add https://github.com/atlas-doc/atlas-flight-booking --skill a
 
 The Skill checks for the CLI when it starts. If the CLI is missing, it explains the requirement and asks for permission before installing anything.
 
+[Installation details and troubleshooting →](docs/installation.md)
+
 ## Rehearse the booking flow in Sandbox
 
 Atlas Flight Booking uses production services by default. Production is the right place to search live fares and make real purchase decisions.
@@ -90,20 +92,6 @@ All subcommands return one stable JSON envelope. Agents branch on the response `
 - The current masked payment summary and Atlas order link are shown before payment.
 - A payment confirmation ID is single-use; uncertain order creation or payment is never repeated.
 - Credentials and private workflow data use the operating system's secure credential facility, with no plaintext fallback.
-
-## Develop and verify offline
-
-```bash
-uv sync --frozen
-uv run --frozen pytest -q
-uv run --frozen ruff check .
-uv run --frozen mypy src/atlas_cli
-bash tests/skill/validate-skill.sh skills/atlas-flight-booking
-uv run --frozen python -m scripts.scan_secrets .
-uv build
-```
-
-These checks use mocks and fixtures; they do not prove online booking behavior. Online acceptance must be performed manually with approved accounts and data.
 
 ## License
 

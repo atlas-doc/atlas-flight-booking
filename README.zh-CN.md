@@ -45,6 +45,8 @@ npx --yes skills add https://github.com/atlas-doc/atlas-flight-booking --skill a
 
 Skill 启动后会检查 CLI。如果没有安装，它会先解释用途并征得用户同意，不会擅自安装软件。
 
+[安装详情与故障排查 →](docs/installation.zh-CN.md)
+
 ## 在 Sandbox 演练完整预订流程
 
 Atlas Flight Booking 默认使用生产服务。查询实时票价以及做出真实购买决策时，应保持默认配置。
@@ -90,20 +92,6 @@ atlas-flight search \
 - 支付前必须展示当前脱敏摘要和 Atlas 订单链接。
 - 支付确认 ID 只能使用一次；生单或支付结果不明确时禁止重试副作用命令。
 - 凭据和私有流程数据使用操作系统安全凭据设施保存，不提供明文降级方案。
-
-## 本地开发与离线验证
-
-```bash
-uv sync --frozen
-uv run --frozen pytest -q
-uv run --frozen ruff check .
-uv run --frozen mypy src/atlas_cli
-bash tests/skill/validate-skill.sh skills/atlas-flight-booking
-uv run --frozen python -m scripts.scan_secrets .
-uv build
-```
-
-这些检查使用 mock 和 fixture，不代表线上订票已经验证。线上验收必须使用经批准的账户和数据，由人工执行。
 
 ## 许可证
 
