@@ -692,6 +692,7 @@ def test_non_finite_ancillary_price_is_invalid_without_option_state(
         ),
         ("baggage", "list_baggage", baggage_response(214), "BAGGAGE_UNAVAILABLE", CommandStatus.SUCCESS),
         ("seat", "list_seats", seat_response(214), "BOOKING_EXPIRED", CommandStatus.TERMINAL_ERROR),
+        ("seat", "list_seats", seat_response(225), "SEAT_UNAVAILABLE", CommandStatus.SUCCESS),
     ],
 )
 def test_empty_or_immediately_unavailable_lookup_closes_only_that_capability(

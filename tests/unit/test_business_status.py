@@ -34,6 +34,7 @@ EXPECTED: dict[tuple[BusinessStage, int], tuple[str, CommandStatus, bool]] = {
     (BusinessStage.SEAT, 220): ("SERVICE_REQUEST_FAILED", CommandStatus.TERMINAL_ERROR, False),
     (BusinessStage.SEAT, 221): ("SEAT_UNAVAILABLE", CommandStatus.SUCCESS, False),
     (BusinessStage.SEAT, 223): ("SEAT_UNAVAILABLE", CommandStatus.SUCCESS, False),
+    (BusinessStage.SEAT, 225): ("SEAT_UNAVAILABLE", CommandStatus.SUCCESS, False),
     (BusinessStage.SEAT, 429): ("SEAT_UNAVAILABLE", CommandStatus.RETRYABLE_ERROR, True),
     (BusinessStage.BAGGAGE, 205): ("BAGGAGE_UNAVAILABLE", CommandStatus.RETRYABLE_ERROR, True),
     (BusinessStage.BAGGAGE, 212): ("SERVICE_REQUEST_FAILED", CommandStatus.TERMINAL_ERROR, False),

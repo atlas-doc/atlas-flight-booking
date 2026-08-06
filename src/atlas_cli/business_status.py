@@ -96,6 +96,7 @@ STATUS_MEANINGS: dict[tuple[BusinessStage, int], StatusMeaning] = {
     (BusinessStage.SEAT, 220): terminal("SERVICE_REQUEST_FAILED"),
     (BusinessStage.SEAT, 221): success("SEAT_UNAVAILABLE"),
     (BusinessStage.SEAT, 223): success("SEAT_UNAVAILABLE"),
+    (BusinessStage.SEAT, 225): success("SEAT_UNAVAILABLE"),
     (BusinessStage.SEAT, 429): retryable("SEAT_UNAVAILABLE"),
     (BusinessStage.BAGGAGE, 205): retryable("BAGGAGE_UNAVAILABLE"),
     (BusinessStage.BAGGAGE, 212): terminal("SERVICE_REQUEST_FAILED"),
