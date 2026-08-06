@@ -93,11 +93,12 @@ def test_default_store_reads_legacy_mode_and_migrates_on_next_update(
     }
 
 
-def test_internal_settings_centralize_business_api_hosts() -> None:
+def test_internal_settings_separate_control_and_business_api_hosts() -> None:
     settings = InternalSettings()
 
-    assert settings.prod_api_base_url == settings.control_api_base_url
+    assert settings.control_api_base_url == "https://atrip-api.atriptech.com"
     assert settings.prod_api_base_url == "https://api-sg.atriptech.com"
+    assert settings.prod_api_base_url != settings.control_api_base_url
     assert settings.sandbox_api_base_url == "https://sandbox.atriptech.com"
     assert settings.authorization_page_url == "https://www.atriptech.com/#/login"
     assert settings.subscription_page_url == "https://www.atriptech.com/#/skill-entry"

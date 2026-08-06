@@ -15,7 +15,7 @@ from platformdirs import user_config_path
 
 @dataclass(frozen=True)
 class InternalSettings:
-    control_api_base_url: str = "https://api-sg.atriptech.com"
+    control_api_base_url: str = "https://atrip-api.atriptech.com"
     prod_api_base_url: str = "https://api-sg.atriptech.com"
     sandbox_api_base_url: str = "https://sandbox.atriptech.com"
     authorization_page_url: str = "https://www.atriptech.com/#/login"
