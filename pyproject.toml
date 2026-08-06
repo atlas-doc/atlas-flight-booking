@@ -1,0 +1,68 @@
+[build-system]
+requires = ["hatchling>=1.27,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "atlas-flight-booking"
+version = "0.3.0"
+description = "Agent-friendly flight search and booking CLI for Atlas"
+readme = "README.md"
+requires-python = ">=3.12,<3.13"
+license = "Apache-2.0"
+keywords = ["agent", "atlas", "flight", "booking", "travel"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Environment :: Console",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Internet :: WWW/HTTP",
+]
+dependencies = [
+  "click>=8.2,<9",
+  "httpx>=0.28,<1",
+  "keyring>=25,<26",
+  "platformdirs>=4,<5",
+  "portalocker>=3,<4",
+  "pydantic>=2.11,<3",
+  "typer>=0.16,<1",
+  "tzdata>=2025.2",
+]
+
+[project.scripts]
+atlas-flight = "atlas_cli.cli:app"
+
+[project.urls]
+Homepage = "https://github.com/atlas-doc/atlas-flight-booking"
+Documentation = "https://github.com/atlas-doc/atlas-flight-booking#readme"
+Issues = "https://github.com/atlas-doc/atlas-flight-booking/issues"
+Repository = "https://github.com/atlas-doc/atlas-flight-booking.git"
+
+[dependency-groups]
+dev = [
+  "mypy>=1.17,<2",
+  "pytest>=8.4,<9",
+  "pytest-httpx>=0.35,<1",
+  "pyyaml>=6,<7",
+  "ruff>=0.12,<1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/atlas_cli"]
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+mypy_path = "src"
+packages = ["atlas_cli"]

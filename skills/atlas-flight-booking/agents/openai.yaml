@@ -1,0 +1,4 @@
+interface:
+  display_name: "Atlas Flight Booking"
+  short_description: "Search, book, pay, and track Atlas flights safely"
+  default_prompt: "Use $atlas-flight-booking to search and verify flights, collect only required booking details, and complete payment only after my current explicit confirmation."

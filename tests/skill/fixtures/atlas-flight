@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+scenario="${ATLAS_TEST_SCENARIO:-happy_path}"
+command_line="$*"
+
+emit() {
+  local payload="$1"
+  local status="${2:-0}"
+  printf '%s\n' "$payload"
+  return "$status"
+}
+
+invalid_argument() {
+  emit '{"schema_version":"1","status":"terminal_error","code":"INVALID_ARGUMENT","message":"Unsupported or malformed Atlas fixture command","retryable":false,"data":{},"details":{"argument":"invalid"}}' 30
+  exit 30
+}
+
+case "${scenario}:${command_line}" in
+  *:'--version')
+    emit 'atlas-flight 0.3.0'
+    ;;
+  auth_required:'auth status --json')
+    emit '{"schema_version":"1","status":"action_required","code":"AUTHORIZATION_REQUIRED","message":"Authorization required","retryable":false,"data":{"authenticated":false},"details":{}}'
+    ;;
+  auth_required:'auth login --json')
+    emit '{"schema_version":"1","status":"action_required","code":"AUTHORIZATION_REQUIRED","message":"Complete authorization","retryable":false,"data":{"authorization_url":"https://auth.invalid/authorize/session_example"},"details":{}}'
+    ;;
+  auth_required:'auth poll --timeout 120 --json')
+    emit '{"schema_version":"1","status":"success","code":"AUTHORIZED","message":"Authorized","retryable":false,"data":{"authenticated":true},"details":{}}'
+    ;;
+  auth_service_unavailable:'auth poll --timeout 120 --json')
+    emit '{"schema_version":"1","status":"retryable_error","code":"AUTH_SERVICE_UNAVAILABLE","message":"Authorization service unavailable","retryable":true,"data":{},"details":{}}' 20
+    ;;
+  no_results:'search --origin KUL --destination SIN --depart 2026-08-04 --adults 1 --json')
+    emit '{"schema_version":"1","status":"success","code":"SEARCH_NO_RESULTS","message":"No results","retryable":false,"data":{"search_id":"srch_empty","offer_count":0,"offers":[],"reason":"no_flight","recent_flight_dates":["2026-08-05"]},"details":{}}'
+    ;;
+  search_limit:'search --origin KUL --destination SIN --depart 2026-08-04 --adults 1 --json')
+    emit '{"schema_version":"1","status":"terminal_error","code":"SEARCH_LIMIT_REACHED","message":"Search limit reached","retryable":false,"data":{},"details":{}}' 30
+    ;;
+  search_retryable:'search --origin KUL --destination SIN --depart 2026-08-04 --adults 1 --json')
+    emit '{"schema_version":"1","status":"retryable_error","code":"SERVICE_TEMPORARILY_UNAVAILABLE","message":"Temporarily unavailable","retryable":true,"data":{},"details":{}}' 20
+    ;;
+  offer_expired:'offer list --search-id srch_old --json'|offer_expired:'offer verify --offer-id off_old --json')
+    emit '{"schema_version":"1","status":"terminal_error","code":"OFFER_EXPIRED","message":"Offer expired; search again","retryable":false,"data":{},"details":{}}' 30
+    ;;
+  subscription_required:'offer verify --offer-id off_example --json')
+    emit '{"schema_version":"1","status":"action_required","code":"SUBSCRIPTION_REQUIRED","message":"Ticketing requires a subscription","retryable":false,"data":{},"details":{"url":"https://purchase.invalid/plans"}}'
+    ;;
+  price_decreased:'offer verify --offer-id off_example --json')
+    emit '{"schema_version":"1","status":"success","code":"OFFER_VERIFIED","message":"Offer verified","retryable":false,"data":{"booking_id":"book_decreased","previous_price":120.00,"current_price":100.00,"currency":"USD","price_change":"decreased","requirements":{"required_fields":["name","passenger_type","gender","document.type","document.number"]},"travelers":[{"traveler_id":"trav_1","passenger_type":"adult"}],"segments":[{"segment_id":"seg_1","segment_index":1}],"baggage_supported":true,"seat_supported":true},"details":{}}'
+    ;;
+  price_increased:'offer verify --offer-id off_example --json')
+    emit '{"schema_version":"1","status":"action_required","code":"PRICE_CONFIRMATION_REQUIRED","message":"Price confirmation required","retryable":false,"data":{"booking_id":"book_increased","previous_price":100.00,"current_price":112.00,"currency":"USD","price_change":"increased","requirements":{"required_fields":["name","passenger_type","gender"]},"travelers":[{"traveler_id":"trav_1","passenger_type":"adult"}],"segments":[{"segment_id":"seg_1","segment_index":1}],"baggage_supported":false,"seat_supported":false},"details":{}}'
+    ;;
+  price_increased:'booking confirm-price --booking-id book_increased --json')
+    emit '{"schema_version":"1","status":"success","code":"PRICE_CONFIRMED","message":"Price confirmed","retryable":false,"data":{"booking_id":"book_increased","previous_price":100.00,"current_price":112.00,"currency":"USD","price_change":"increased"},"details":{}}'
+    ;;
+  baggage_unavailable:'booking baggage list --booking-id book_example --json')
+    emit '{"schema_version":"1","status":"success","code":"BAGGAGE_UNAVAILABLE","message":"Baggage selection is unavailable","retryable":false,"data":{"booking_id":"book_example","options":[]},"details":{}}'
+    ;;
+  seat_unavailable:'booking seat list --booking-id book_example --json')
+    emit '{"schema_version":"1","status":"success","code":"SEAT_UNAVAILABLE","message":"Seat selection is unavailable","retryable":false,"data":{"booking_id":"book_example","options":[]},"details":{}}'
+    ;;
+  passenger_required:'order create --booking-id book_example --passengers-stdin --json')
+    emit '{"schema_version":"1","status":"action_required","code":"PASSENGER_INFO_REQUIRED","message":"Required passenger information is missing","retryable":false,"data":{},"details":{"fields":["passengers[0].document.number"]}}'
+    ;;
+  order_ready:'order create --booking-id book_example --passengers-stdin --json'|order_ready:'order create --booking-id book_example --passengers-file /tmp/atlas-passengers.json --json')
+    emit '{"schema_version":"1","status":"action_required","code":"PAYMENT_CONFIRMATION_REQUIRED","message":"Review the current payment summary before paying","retryable":false,"data":{"order_no":"ATORDEREXAMPLE","order_url":"https://www.atriptech.com/#/order/detail/ATORDEREXAMPLE/en","total_price":112.00,"transaction_fee":2.00,"currency":"USD","payment_deadline":"2026-08-05T18:00:00+08:00","payment_summary":{"ticket_price":100.00,"baggage_total":0.00,"seat_total":10.00,"total_price":112.00,"currency":"USD","passengers":[{"traveler_id":"trav_1","name":"A***/S***","document":"****3456"}],"ancillaries":[{"kind":"seat","traveler_id":"trav_1","segment_id":"seg_1","description":"Seat 5A","price":10.00,"currency":"USD"}],"price_change":"increased","previous_offer_total":100.00,"current_offer_total":110.00},"payment_confirmation_id":"paycfm_current"},"details":{}}'
+    ;;
+  payment_unknown:'order pay --confirmation-id paycfm_current --json')
+    emit '{"schema_version":"1","status":"action_required","code":"PAYMENT_STATUS_UNKNOWN","message":"Payment status could not be confirmed","retryable":false,"data":{"order_no":"ATORDEREXAMPLE","order_url":"https://www.atriptech.com/#/order/detail/ATORDEREXAMPLE/en"},"details":{}}'
+    ;;
+  payment_unknown:'order status --order-no ATORDEREXAMPLE --json'|ticketing_pending:'order status --order-no ATORDEREXAMPLE --json')
+    emit '{"schema_version":"1","status":"success","code":"TICKETING_PENDING","message":"Ticketing is still pending","retryable":false,"data":{"order_no":"ATORDEREXAMPLE","order_url":"https://www.atriptech.com/#/order/detail/ATORDEREXAMPLE/en","airline_pnrs":[],"ticket_numbers":[]},"details":{}}'
+    ;;
+  ticketed:'order status --order-no ATORDEREXAMPLE --json'|happy_path:'order pay --confirmation-id paycfm_current --json')
+    emit '{"schema_version":"1","status":"success","code":"TICKETED","message":"Tickets have been issued","retryable":false,"data":{"order_no":"ATORDEREXAMPLE","order_url":"https://www.atriptech.com/#/order/detail/ATORDEREXAMPLE/en","airline_pnrs":["A***9"],"ticket_numbers":["1**********34"]},"details":{}}'
+    ;;
+  *:'auth status --json')
+    emit '{"schema_version":"1","status":"success","code":"AUTHORIZED","message":"Authorized","retryable":false,"data":{"authenticated":true},"details":{}}'
+    ;;
+  *:'search --origin KUL --destination SIN --depart 2026-08-04 --adults 1 --json'|*:'search --json')
+    emit '{"schema_version":"1","status":"success","code":"FLIGHT_SEARCHED","message":"Search complete","retryable":false,"data":{"search_id":"srch_example","offer_count":1,"offers":[{"offer_id":"off_example","total_price":100.00,"currency":"USD","bookable":true,"price_status":"current","ancillary_supported":["baggage","seat"]}]},"details":{}}'
+    ;;
+  *:'offer list --search-id srch_example --json')
+    emit '{"schema_version":"1","status":"success","code":"OFFERS_LISTED","message":"Offers listed","retryable":false,"data":{"search_id":"srch_example","offer_count":1,"offers":[{"offer_id":"off_example","total_price":100.00,"currency":"USD","bookable":true,"price_status":"current","ancillary_supported":["baggage","seat"]}]},"details":{}}'
+    ;;
+  *:'offer verify --offer-id off_example --json')
+    emit '{"schema_version":"1","status":"success","code":"OFFER_VERIFIED","message":"Offer verified","retryable":false,"data":{"booking_id":"book_example","previous_price":100.00,"current_price":100.00,"currency":"USD","price_change":"unchanged","requirements":{"required_fields":["name","passenger_type","gender","document.type","document.number"]},"travelers":[{"traveler_id":"trav_1","passenger_type":"adult"}],"segments":[{"segment_id":"seg_1","segment_index":1}],"baggage_supported":true,"seat_supported":true},"details":{}}'
+    ;;
+  *:'booking baggage list --booking-id book_example --json')
+    emit '{"schema_version":"1","status":"success","code":"BAGGAGE_OPTIONS_LISTED","message":"Baggage options listed","retryable":false,"data":{"booking_id":"book_example","options":[{"baggage_id":"bag_1","segment_id":"seg_1","piece":1,"weight_kg":20,"size":null,"category":"checked","price":25.00,"currency":"USD"}]},"details":{}}'
+    ;;
+  *:'booking baggage select --booking-id book_example --traveler-id trav_1 --segment-id seg_1 --baggage-id bag_1 --json')
+    emit '{"schema_version":"1","status":"success","code":"BAGGAGE_SELECTED","message":"Baggage selected","retryable":false,"data":{"booking_id":"book_example","traveler_id":"trav_1","segment_id":"seg_1","baggage_id":"bag_1"},"details":{}}'
+    ;;
+  *:'booking baggage remove --booking-id book_example --traveler-id trav_1 --segment-id seg_1 --json')
+    emit '{"schema_version":"1","status":"success","code":"BAGGAGE_REMOVED","message":"Baggage removed","retryable":false,"data":{"booking_id":"book_example","traveler_id":"trav_1","segment_id":"seg_1"},"details":{}}'
+    ;;
+  *:'booking seat list --booking-id book_example --json')
+    emit '{"schema_version":"1","status":"success","code":"SEAT_OPTIONS_LISTED","message":"Seat options listed","retryable":false,"data":{"booking_id":"book_example","options":[{"seat_id":"seat_1","segment_id":"seg_1","row":5,"column":"A","characteristics":["window"],"price":10.00,"currency":"USD"}]},"details":{}}'
+    ;;
+  *:'booking seat select --booking-id book_example --traveler-id trav_1 --segment-id seg_1 --seat-id seat_1 --json')
+    emit '{"schema_version":"1","status":"success","code":"SEAT_SELECTED","message":"Seat selected","retryable":false,"data":{"booking_id":"book_example","traveler_id":"trav_1","segment_id":"seg_1","seat_id":"seat_1"},"details":{}}'
+    ;;
+  *:'booking seat remove --booking-id book_example --traveler-id trav_1 --segment-id seg_1 --json')
+    emit '{"schema_version":"1","status":"success","code":"SEAT_REMOVED","message":"Seat removed","retryable":false,"data":{"booking_id":"book_example","traveler_id":"trav_1","segment_id":"seg_1"},"details":{}}'
+    ;;
+  *:'order create --booking-id book_example --passengers-stdin --seat-policy continue-without-seat --json'|*:'order create --booking-id book_example --passengers-stdin --seat-policy cancel-order --json'|*:'order create --booking-id book_example --passengers-stdin --seat-policy accept-similar-seat --json')
+    emit '{"schema_version":"1","status":"action_required","code":"PAYMENT_CONFIRMATION_REQUIRED","message":"Review the current payment summary before paying","retryable":false,"data":{"order_no":"ATORDEREXAMPLE","order_url":"https://www.atriptech.com/#/order/detail/ATORDEREXAMPLE/en","total_price":110.00,"currency":"USD","payment_summary":{"ticket_price":100.00,"baggage_total":0.00,"seat_total":10.00,"total_price":110.00,"currency":"USD","passengers":[{"traveler_id":"trav_1","name":"A***/S***","document":"****3456"}],"ancillaries":[],"price_change":"unchanged"},"payment_confirmation_id":"paycfm_current"},"details":{}}'
+    ;;
+  *:'order status --order-no ATORDEREXAMPLE --json')
+    emit '{"schema_version":"1","status":"success","code":"TICKETED","message":"Tickets have been issued","retryable":false,"data":{"order_no":"ATORDEREXAMPLE","order_url":"https://www.atriptech.com/#/order/detail/ATORDEREXAMPLE/en","airline_pnrs":["A***9"],"ticket_numbers":["1**********34"]},"details":{}}'
+    ;;
+  *:'doctor --json')
+    emit '{"schema_version":"1","status":"success","code":"DOCTOR_OK","message":"Ready","retryable":false,"data":{"cli_available":true,"authenticated":true},"details":{}}'
+    ;;
+  *)
+    invalid_argument
+    ;;
+esac
