@@ -45,6 +45,28 @@ npx --yes skills add https://github.com/atlas-doc/atlas-flight-booking --skill a
 
 Skill 启动后会检查 CLI。如果没有安装，它会先解释用途并征得用户同意，不会擅自安装软件。
 
+## 在 Sandbox 演练完整预订流程
+
+Atlas Flight Booking 默认使用生产服务。查询实时票价以及做出真实购买决策时，应保持默认配置。
+
+只有在付费前想完整演练正向预订流程，或者已付费客户需要进行回归测试时，才需要切换到 Sandbox。Sandbox 使用测试数据，不会创建真实的生产订单或产生真实扣款。
+
+完成 Atlas 授权后，由用户在终端手动执行：
+
+```bash
+atlas-flight environment use sandbox --json
+```
+
+切换后继续使用同一个 Skill 和相同的公开命令，无需重新安装，也不需要为 Agent 提供另一套操作说明。切换只会修改 CLI 的本地服务配置。切换前获得的报价会失效，请重新搜索后再继续。
+
+需要恢复实时票价和生产预订时，在终端执行：
+
+```bash
+atlas-flight environment use production --json
+```
+
+Sandbox 中的价格和库存都是测试数据，不能作为真实购买决策的依据。
+
 ## 开始搜索
 
 安装 Skill 后，用户可以直接用自然语言告诉 Agent 航线、日期和乘客数量。对应的 CLI 命令示例为：

@@ -45,6 +45,28 @@ npx --yes skills add https://github.com/atlas-doc/atlas-flight-booking --skill a
 
 The Skill checks for the CLI when it starts. If the CLI is missing, it explains the requirement and asks for permission before installing anything.
 
+## Rehearse the booking flow in Sandbox
+
+Atlas Flight Booking uses production services by default. Production is the right place to search live fares and make real purchase decisions.
+
+Switch to Sandbox only when you want to rehearse the complete forward booking flow before paying, or when an existing customer needs a regression test. Sandbox uses test data and does not create a real production booking or charge.
+
+After completing Atlas authorization, run this command yourself in a terminal:
+
+```bash
+atlas-flight environment use sandbox --json
+```
+
+The same Skill and public commands continue to work after the switch; there is nothing to reinstall and the Agent does not need different instructions. Switching changes only the CLI's local service configuration. Any offer obtained before the switch expires, so start a new search before continuing.
+
+To return to live fares and production booking, run:
+
+```bash
+atlas-flight environment use production --json
+```
+
+Sandbox prices and availability are test data and must not be used as the basis for a purchase decision.
+
 ## Start a flight search
 
 An Agent using the Skill will collect missing inputs and operate the CLI. The equivalent direct command is:
