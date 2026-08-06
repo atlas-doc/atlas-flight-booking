@@ -65,6 +65,9 @@ case "${scenario}:${command_line}" in
   passenger_required:'order create --booking-id book_example --passengers-stdin --json')
     emit '{"schema_version":"1","status":"action_required","code":"PASSENGER_INFO_REQUIRED","message":"Required passenger information is missing","retryable":false,"data":{},"details":{"fields":["passengers[0].document.number"]}}'
     ;;
+  contact_invalid:'order create --booking-id book_example --passengers-stdin --json')
+    emit '{"schema_version":"1","status":"action_required","code":"CONTACT_INFO_INVALID","message":"Contact information could not be accepted","retryable":false,"data":{},"details":{"fields":["contact.email"]}}'
+    ;;
   order_ready:'order create --booking-id book_example --passengers-stdin --json'|order_ready:'order create --booking-id book_example --passengers-file /tmp/atlas-passengers.json --json')
     emit '{"schema_version":"1","status":"action_required","code":"PAYMENT_CONFIRMATION_REQUIRED","message":"Review the current payment summary before paying","retryable":false,"data":{"order_no":"ATORDEREXAMPLE","order_url":"https://www.atriptech.com/#/order/detail/ATORDEREXAMPLE/en","total_price":112.00,"transaction_fee":2.00,"currency":"USD","payment_deadline":"2026-08-05T18:00:00+08:00","payment_summary":{"ticket_price":100.00,"baggage_total":0.00,"seat_total":10.00,"total_price":112.00,"currency":"USD","passengers":[{"traveler_id":"trav_1","name":"A***/S***","document":"****3456"}],"ancillaries":[{"kind":"seat","traveler_id":"trav_1","segment_id":"seg_1","description":"Seat 5A","price":10.00,"currency":"USD"}],"price_change":"increased","previous_offer_total":100.00,"current_offer_total":110.00},"payment_confirmation_id":"paycfm_current"},"details":{}}'
     ;;

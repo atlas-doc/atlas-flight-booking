@@ -22,6 +22,7 @@ from atlas_cli.booking_persistence import PersistedBookingState
 from atlas_cli.booking_store import BookingStore, BookingStoreError
 from atlas_cli.business_client import BusinessApiError, BusinessResponse
 from atlas_cli.endpoints import BusinessOperation, BusinessRoute, CredentialSlot
+from atlas_cli.models import CommandStatus
 from atlas_cli.orders import OrderAdapter, OrderService
 from atlas_cli.passengers import PassengerSource
 from atlas_cli.search_models import NormalizedOffer, NormalizedPassengerPrice, NormalizedSegment
@@ -241,6 +242,28 @@ def test_order_failure_state_tracks_side_effect_certainty(
     service, _, store = make_service(tmp_path, response(status))
     assert service.create("book_1", source(), None).code == code
     assert store.load("book_1", generation=GENERATION).order_attempt_state is state
+
+
+@pytest.mark.parametrize(
+    ("upstream_status", "expected_fields"),
+    [
+        (323, ["contact.email"]),
+        (410, ["contact"]),
+    ],
+)
+def test_contact_failures_identify_only_the_fields_to_correct(
+    tmp_path: Path,
+    upstream_status: int,
+    expected_fields: list[str],
+) -> None:
+    service, _, store = make_service(tmp_path, response(upstream_status))
+
+    result = service.create("book_1", source(), None)
+
+    assert result.code == "CONTACT_INFO_INVALID"
+    assert result.status is CommandStatus.ACTION_REQUIRED
+    assert result.details == {"fields": expected_fields}
+    assert store.load("book_1", generation=GENERATION).order_attempt_state is OrderAttemptState.READY
 
 
 def test_missing_balance_method_stores_order_without_confirmation(tmp_path: Path) -> None:

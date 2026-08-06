@@ -48,4 +48,4 @@ Names use uppercase `FAMILY/GIVEN`. Preserve document numbers exactly. Mobile nu
 
 ## Safe correction
 
-On `PASSENGER_INFO_REQUIRED` or `PASSENGER_INFO_INVALID`, read only `details.fields`, ask for those fields, rebuild the full one-time payload, and submit once. Never repeat rejected personal data in the explanation.
+On `PASSENGER_INFO_REQUIRED`, `PASSENGER_INFO_INVALID`, or `CONTACT_INFO_INVALID`, read only `details.fields`, ask for those fields, rebuild the full one-time payload, and submit once. Never repeat rejected personal data in the explanation. Contact email remains optional unless the CLI specifically returns `contact.email` in `details.fields`.

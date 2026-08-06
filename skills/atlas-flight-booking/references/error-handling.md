@@ -38,6 +38,7 @@ Branch on `code`; never parse `message`. Keep internal causes out of user-facing
 | `ANCILLARY_SELECTION_INVALID` | Relist that service; ask the user to choose a current option or continue without it. |
 | `PASSENGER_INFO_REQUIRED` | Ask only for the safe field names in `details.fields`, then rebuild one one-time payload. |
 | `PASSENGER_INFO_INVALID` | Correct only fields named in `details.fields`; never repeat rejected values. |
+| `CONTACT_INFO_INVALID` | Ask only for the contact fields named in `details.fields`; rebuild the complete one-time payload after the user supplies them. |
 | `PASSENGER_COMBINATION_UNSUPPORTED` | Report that the passenger combination cannot be booked and stop. |
 
 ## Order, payment, and ticketing

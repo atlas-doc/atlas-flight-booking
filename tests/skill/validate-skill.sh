@@ -58,7 +58,7 @@ check_structure_and_contracts() {
     PRICE_CONFIRMATION_REQUIRED PRICE_CONFIRMED PRICE_CHANGED BOOKING_INPUT_INVALID \
     BAGGAGE_UNAVAILABLE \
     SEAT_UNAVAILABLE ANCILLARY_SELECTION_INVALID PASSENGER_INFO_REQUIRED \
-    PASSENGER_INFO_INVALID ORDER_CREATION_UNKNOWN PAYMENT_CONFIRMATION_REQUIRED \
+    PASSENGER_INFO_INVALID CONTACT_INFO_INVALID ORDER_CREATION_UNKNOWN PAYMENT_CONFIRMATION_REQUIRED \
     PAYMENT_CONFIRMATION_INVALID PAYMENT_STATUS_UNKNOWN PAYMENT_METHOD_UNAVAILABLE \
     TICKETED TICKETING_PENDING ORDER_CANCELLED ORDER_STATUS_UNAVAILABLE \
     ORDER_CREATION_UNAVAILABLE UNSUPPORTED_BOOKING_FLOW BOOKING_STATE_INVALID \
@@ -182,7 +182,7 @@ fixture_rejects() {
 check_fixture() {
   for scenario in happy_path auth_required no_results search_limit search_retryable offer_expired \
     auth_service_unavailable price_decreased price_increased baggage_unavailable seat_unavailable \
-    passenger_required order_ready payment_unknown ticketing_pending ticketed subscription_required; do
+    passenger_required contact_invalid order_ready payment_unknown ticketing_pending ticketed subscription_required; do
     version="$(PATH="$PWD/tests/skill/fixtures:$PATH" ATLAS_TEST_SCENARIO="$scenario" atlas-flight --version)"
     test "$version" = 'atlas-flight 0.3.2' || fail "inconsistent plain-text version for $scenario: $version"
   done
@@ -213,6 +213,7 @@ check_fixture() {
   fixture_json happy_path SEAT_REMOVED booking seat remove --booking-id book_example --traveler-id trav_1 --segment-id seg_1 --json
   fixture_json seat_unavailable SEAT_UNAVAILABLE booking seat list --booking-id book_example --json
   fixture_json passenger_required PASSENGER_INFO_REQUIRED order create --booking-id book_example --passengers-stdin --json
+  fixture_json contact_invalid CONTACT_INFO_INVALID order create --booking-id book_example --passengers-stdin --json
   fixture_json order_ready PAYMENT_CONFIRMATION_REQUIRED order create --booking-id book_example --passengers-stdin --json
   fixture_json order_ready PAYMENT_CONFIRMATION_REQUIRED order create --booking-id book_example --passengers-file /tmp/atlas-passengers.json --json
   fixture_json happy_path PAYMENT_CONFIRMATION_REQUIRED order create --booking-id book_example --passengers-stdin --seat-policy continue-without-seat --json

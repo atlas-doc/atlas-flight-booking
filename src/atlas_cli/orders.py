@@ -449,6 +449,14 @@ class OrderService:
         details: dict[str, object] = {}
         if isinstance(error, PassengerInputError):
             details["fields"] = list(error.fields)
+        if isinstance(error, BookingApiError):
+            fields = None
+            if error.upstream_status == 323:
+                fields = ["contact.email"]
+            elif error.upstream_status == 410:
+                fields = ["contact"]
+            if fields is not None:
+                details["fields"] = fields
         if isinstance(error, AccessManagerError):
             url = error.details.get("url")
             if isinstance(url, str) and url:
