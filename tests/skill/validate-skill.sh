@@ -121,7 +121,10 @@ check_structure_and_contracts() {
     '`data.order_url`' \
     'only when it is present' \
     'Never invent or derive a link' \
-    'Never call `atlas-flight order pay` again'; do
+    'Never call `atlas-flight order pay` again' \
+    'real-time flight price search and comparison only' \
+    '价格查询与比价说明' \
+    'Do not expose internal product labels'; do
     rg -Fiq "$phrase" "$skill_dir" ||
       fail "missing safe booking instruction: $phrase"
   done
@@ -131,6 +134,8 @@ check_structure_and_contracts() {
     'asks the user to reply' \
     'must not run `auth poll` in the first turn' \
     'After the user replies' \
+    'real-time flight price search and comparison only' \
+    '价格查询与比价说明' \
     'Price decreased' \
     'Price increased' \
     'asks only for `passengers[0].document.number`' \
@@ -187,7 +192,7 @@ fixture_rejects() {
 }
 
 check_fixture() {
-  for scenario in happy_path auth_required no_results search_limit search_retryable offer_expired \
+  for scenario in happy_path auth_required no_results search_limit search_retryable comparison_only offer_expired \
     auth_service_unavailable price_decreased price_increased baggage_unavailable seat_unavailable \
     passenger_required contact_invalid order_ready order_without_link payment_unknown ticketing_pending ticketed subscription_required; do
     version="$(PATH="$PWD/tests/skill/fixtures:$PATH" ATLAS_TEST_SCENARIO="$scenario" atlas-flight --version)"
@@ -205,6 +210,7 @@ check_fixture() {
   fixture_json no_results SEARCH_NO_RESULTS search --origin KUL --destination SIN --depart 2026-08-04 --adults 1 --json
   fixture_json search_limit SEARCH_LIMIT_REACHED search --origin KUL --destination SIN --depart 2026-08-04 --adults 1 --json
   fixture_json search_retryable SERVICE_TEMPORARILY_UNAVAILABLE search --origin KUL --destination SIN --depart 2026-08-04 --adults 1 --json
+  fixture_json comparison_only FLIGHT_SEARCHED search --origin TYO --destination OSA --depart 2026-09-07 --adults 1 --json
   fixture_json offer_expired OFFER_EXPIRED offer list --search-id srch_old --json
   fixture_json subscription_required SUBSCRIPTION_REQUIRED offer verify --offer-id off_example --json
   fixture_json price_decreased OFFER_VERIFIED offer verify --offer-id off_example --json

@@ -41,6 +41,9 @@ case "${scenario}:${command_line}" in
   search_retryable:'search --origin KUL --destination SIN --depart 2026-08-04 --adults 1 --json')
     emit '{"schema_version":"1","status":"retryable_error","code":"SERVICE_TEMPORARILY_UNAVAILABLE","message":"Temporarily unavailable","retryable":true,"data":{},"details":{}}' 20
     ;;
+  comparison_only:'search --origin TYO --destination OSA --depart 2026-09-07 --adults 1 --json')
+    emit '{"schema_version":"1","status":"success","code":"FLIGHT_SEARCHED","message":"Search complete","retryable":false,"data":{"search_id":"srch_comparison","offer_count":1,"offers":[{"offer_id":"off_comparison","total_price":44.76,"currency":"USD","bookable":false,"price_status":"reference","ancillary_supported":[]}]},"details":{}}'
+    ;;
   offer_expired:'offer list --search-id srch_old --json'|offer_expired:'offer verify --offer-id off_old --json')
     emit '{"schema_version":"1","status":"terminal_error","code":"OFFER_EXPIRED","message":"Offer expired; search again","retryable":false,"data":{},"details":{}}' 30
     ;;

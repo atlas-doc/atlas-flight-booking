@@ -4,6 +4,8 @@
 
 Run authorization status before search work. Search using complete inputs, present normalized offers, and preserve the selected `offer_id`. Verify only that returned ID.
 
+If the search result has `bookable=false` or `price_status=reference`, present it as real-time flight price search and comparison only. Say that it cannot continue to price verification or ticketing, include the official “价格查询与比价说明” link from `SKILL.md`, and stop the booking workflow. Do not expose internal product labels.
+
 Use `data.price_change`, `data.previous_price`, `data.current_price`, and `data.currency`:
 
 - `unchanged`: state that the price was verified and continue.

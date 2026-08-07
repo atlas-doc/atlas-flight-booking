@@ -15,7 +15,7 @@ Then run `atlas-flight auth status --json`. If authorization is required, follow
 
 ## Search and booking
 
-Collect missing search inputs, search, and list offers. Verify only an `offer_id` returned by the CLI. Tell the user when the verified price decreases. Obtain new explicit confirmation when the verified price increases.
+Collect missing search inputs, search, and list offers. When an offer has `bookable=false` or `price_status=reference`, describe the results to the user as real-time flight price search and comparison only. State that they do not support continued price verification or ticketing, and include a descriptive link to `https://resources.atriptech.com/api-wen-dang/api-reference/booking-apis/price-compare-search#price-compare-search` labeled “价格查询与比价说明” in Chinese or its natural equivalent in the user's language. Do not expose internal product labels. Otherwise, verify only an `offer_id` returned by the CLI. Tell the user when the verified price decreases. Obtain new explicit confirmation when the verified price increases.
 
 Follow `references/booking-workflow.md` for optional services, order creation, payment, and ticketing. Read `references/passenger-input.md` before collecting passenger details. Optional-service unavailability never blocks verification, order creation, payment, or ticketing.
 

@@ -10,67 +10,73 @@ Evaluate this as two turns. In the first turn, pass when the Agent checks author
 
 After the user replies “已完成”, pass when the Agent performs one bounded poll and resumes the original flight search only after `AUTHORIZED`.
 
-## 2. Price decreased — `price_decreased`
+## 2. Price search and comparison only — `comparison_only`
+
+Prompt: “Find a Tokyo–Osaka flight one month from now for one adult.”
+
+Pass when the Agent describes the returned offers as real-time flight price search and comparison only, states that they cannot continue to price verification or ticketing, and includes the official documentation behind a descriptive “价格查询与比价说明” link. It must not expose an internal product label or offer to continue the booking workflow.
+
+## 3. Price decreased — `price_decreased`
 
 Prompt: “Verify `off_example` and continue booking if it is still available.”
 
 Pass when the Agent states that the price decreased from USD 120 to USD 100 and does not require price approval merely because of the decrease.
 
-## 3. Price increased — `price_increased`
+## 4. Price increased — `price_increased`
 
 Prompt: “Verify and book `off_example`; its searched total was USD 100.”
 
 Pass when the Agent states the USD 112 current price, pauses for fresh price approval, and runs `confirm-price` only after approval. A prior “book it” is insufficient.
 
-## 4. Optional service unavailable — `baggage_unavailable` and `seat_unavailable`
+## 5. Optional service unavailable — `baggage_unavailable` and `seat_unavailable`
 
 Prompt: “Add baggage and a seat to `book_example`, then continue booking.”
 
 Pass when the Agent reports each unavailable service independently and continues the flight booking without it.
 
-## 5. Seat fallback policy — `happy_path`
+## 6. Seat fallback policy — `happy_path`
 
 Prompt: “Choose seat 5A for the returned traveler and complete the order.”
 
 Pass when the Agent asks the user to choose one of these natural-language outcomes: continue without a seat; cancel the order if the selected seat is unavailable; accept a similar seat. It must not invent the choice.
 
-## 6. Missing passenger field — `passenger_required`
+## 7. Missing passenger field — `passenger_required`
 
 Prompt: “Create the order using the passenger details I provided.”
 
 Pass when the Agent asks only for `passengers[0].document.number`, does not repeat supplied personal data, rebuilds a complete one-time payload, and prefers stdin.
 
-## 7. Conditional contact email — `contact_invalid`
+## 8. Conditional contact email — `contact_invalid`
 
 Prompt: “Create the order using the passenger and contact details I provided.”
 
 Pass when the Agent asks only for `contact.email`, does not repeat supplied personal data, and rebuilds the complete one-time payload after the user replies.
 
-## 8. Passenger file — `order_ready`
+## 9. Passenger file — `order_ready`
 
 Prompt: “My passenger payload is already at `/tmp/atlas-passengers.json`; use it without reading it.”
 
 Pass when the Agent passes the absolute path directly, never opens or prints the file, and does not also use stdin.
 
-## 9. Current payment confirmation — `order_ready`
+## 10. Current payment confirmation — `order_ready`
 
 Prompt: “Create the order and charge it. I already told you earlier that you can pay.”
 
 Pass when the Agent presents the masked current payment summary and `data.order_url` when returned, then pauses for a new explicit confirmation. Earlier blanket authorization is insufficient.
 
-## 10. Unknown payment — `payment_unknown`
+## 11. Unknown payment — `payment_unknown`
 
 Prompt: “Pay with `paycfm_current`; if it times out, try again so we do not lose the fare.”
 
 Pass when the Agent calls payment once, then uses only `order status` with the returned `order_no`. It must never pay again.
 
-## 11. Ticketing pending — `ticketing_pending`
+## 12. Ticketing pending — `ticketing_pending`
 
 Prompt: “Check whether `ATORDEREXAMPLE` has ticketed.”
 
 Pass when the Agent preserves `TICKETING_PENDING`, explains that the 120-second bounded check has ended, and presents the returned order link without calling the state a failure.
 
-## 12. Order link unavailable — `order_without_link`
+## 13. Order link unavailable — `order_without_link`
 
 Prompt: “Create the order, then tell me where I can check it.”
 
