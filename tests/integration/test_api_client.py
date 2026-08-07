@@ -445,6 +445,22 @@ def test_protected_service_code_5107_without_data_requires_authorization() -> No
     assert caught.value.request_id == "req-invalid-token"
 
 
+def test_protected_service_code_5555_requires_new_authorization() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json=envelope(None, request_id="req-expired-jwt", code=5555, success=False),
+        )
+
+    with pytest.raises(ApiClientError) as caught:
+        client_with_handler(handler).check_access_info("expired-jwt-value")
+
+    assert caught.value.code == "AUTHORIZATION_REQUIRED"
+    assert caught.value.retryable is False
+    assert caught.value.request_id == "req-expired-jwt"
+    assert "5555" not in str(caught.value)
+
+
 def test_protected_http_401_requires_authorization() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(401, json={"code": 401, "message": "raw unauthorized"})

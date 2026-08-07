@@ -28,6 +28,7 @@ from atlas_cli.config import InternalSettings
 
 logger = logging.getLogger(__name__)
 access_credential_records_adapter = TypeAdapter(list[AccessCredentialRecord])
+PROTECTED_AUTHORIZATION_REQUIRED_CODES = frozenset({5107, 5555})
 
 
 class ApiClientError(RuntimeError):
@@ -293,7 +294,7 @@ class AtlasApiClient:
         *,
         protected: bool,
     ) -> NoReturn:
-        if protected and service_code == 5107:
+        if protected and service_code in PROTECTED_AUTHORIZATION_REQUIRED_CODES:
             self._raise_public_error(
                 code="AUTHORIZATION_REQUIRED",
                 message="Authorization required",
