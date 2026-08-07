@@ -99,6 +99,7 @@ class PaymentService:
         adapter: PaymentGateway | PaymentAdapter,
         booking_store: PaymentStore | BookingStore,
         ticketing: TicketingRecovery | TicketingService,
+        order_url: Callable[[str], str | None] | None = None,
         now: Callable[[], datetime] = _now,
     ) -> None:
         self._secrets = secrets
@@ -106,6 +107,7 @@ class PaymentService:
         self._adapter = adapter
         self._booking_store = booking_store
         self._ticketing = ticketing
+        self._order_url = order_url
         self._now = now
 
     def pay(self, confirmation_id: str) -> CommandResult:
@@ -119,7 +121,7 @@ class PaymentService:
         except (BookingStoreError, OSError) as error:
             return booking_error_result(error)
 
-        locator: dict[str, object] = {"order_no": order.order_no, "order_url": order.order_url}
+        locator = self._order_locator(order)
         try:
             submission = self._adapter.pay(access.route, access.credential, order.order_no)
         except BookingApiError as error:
@@ -190,3 +192,10 @@ class PaymentService:
     def _update_payment_best_effort(self, order_no: str, state: PaymentState) -> None:
         with suppress(Exception):
             self._booking_store.update_payment(order_no, state)
+
+    def _order_locator(self, order: OrderState) -> dict[str, object]:
+        locator: dict[str, object] = {"order_no": order.order_no}
+        order_url = self._order_url(order.order_no) if self._order_url is not None else order.order_url
+        if order_url is not None:
+            locator["order_url"] = order_url
+        return locator

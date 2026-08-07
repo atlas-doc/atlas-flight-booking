@@ -140,7 +140,14 @@ class EndpointResolver:
     def subscription_url(self) -> str:
         return self._settings.subscription_page_url
 
-    def order_url(self, order_no: str) -> str:
+    def order_url(
+        self,
+        order_no: str,
+        *,
+        mode: CustomerMode = CustomerMode.PROD,
+    ) -> str | None:
+        if mode is not CustomerMode.PROD:
+            return None
         return self._settings.order_detail_url_template.format(order_no=quote(order_no, safe=""))
 
     @staticmethod

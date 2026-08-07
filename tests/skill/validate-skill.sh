@@ -115,6 +115,8 @@ check_structure_and_contracts() {
     'accept a similar seat' \
     'current payment summary' \
     '`data.order_url`' \
+    'only when it is present' \
+    'Never invent or derive a link' \
     'Never call `atlas-flight order pay` again'; do
     rg -Fiq "$phrase" "$skill_dir" ||
       fail "missing safe booking instruction: $phrase"
@@ -133,6 +135,7 @@ check_structure_and_contracts() {
     'cancel the order if the selected seat is unavailable' \
     'accept a similar seat' \
     '`data.order_url`' \
+    'does not invent or derive a URL' \
     'Earlier blanket authorization is insufficient' \
     'uses only `order status`'; do
     rg -Fiq "$phrase" "$scenarios" ||
@@ -182,9 +185,9 @@ fixture_rejects() {
 check_fixture() {
   for scenario in happy_path auth_required no_results search_limit search_retryable offer_expired \
     auth_service_unavailable price_decreased price_increased baggage_unavailable seat_unavailable \
-    passenger_required contact_invalid order_ready payment_unknown ticketing_pending ticketed subscription_required; do
+    passenger_required contact_invalid order_ready order_without_link payment_unknown ticketing_pending ticketed subscription_required; do
     version="$(PATH="$PWD/tests/skill/fixtures:$PATH" ATLAS_TEST_SCENARIO="$scenario" atlas-flight --version)"
-    test "$version" = 'atlas-flight 0.3.3' || fail "inconsistent plain-text version for $scenario: $version"
+    test "$version" = 'atlas-flight 0.3.4' || fail "inconsistent plain-text version for $scenario: $version"
   done
 
   fixture_json auth_required AUTHORIZATION_REQUIRED auth status --json
@@ -216,6 +219,8 @@ check_fixture() {
   fixture_json contact_invalid CONTACT_INFO_INVALID order create --booking-id book_example --passengers-stdin --json
   fixture_json order_ready PAYMENT_CONFIRMATION_REQUIRED order create --booking-id book_example --passengers-stdin --json
   fixture_json order_ready PAYMENT_CONFIRMATION_REQUIRED order create --booking-id book_example --passengers-file /tmp/atlas-passengers.json --json
+  fixture_json order_without_link PAYMENT_CONFIRMATION_REQUIRED order create --booking-id book_example --passengers-stdin --json
+  fixture_json order_without_link TICKETING_PENDING order status --order-no ATORDEREXAMPLE --json
   fixture_json happy_path PAYMENT_CONFIRMATION_REQUIRED order create --booking-id book_example --passengers-stdin --seat-policy continue-without-seat --json
   fixture_json happy_path PAYMENT_CONFIRMATION_REQUIRED order create --booking-id book_example --passengers-stdin --seat-policy cancel-order --json
   fixture_json happy_path PAYMENT_CONFIRMATION_REQUIRED order create --booking-id book_example --passengers-stdin --seat-policy accept-similar-seat --json

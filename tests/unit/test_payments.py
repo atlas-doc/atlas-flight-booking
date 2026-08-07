@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import multiprocessing
 import os
+from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
@@ -206,6 +207,7 @@ def make_payment_service(
     secrets: Secrets | None = None,
     access: Access | None = None,
     ticketing: Ticketing | None = None,
+    order_url: Callable[[str], str | None] | None = None,
 ) -> tuple[PaymentService, FakeBusiness, Ticketing, AtomicPaymentStore, Access]:
     business = FakeBusiness(business_error or pay_response(pay_status, order_no=response_order_no))
     payment_store = store or AtomicPaymentStore()
@@ -217,6 +219,7 @@ def make_payment_service(
         adapter=PaymentAdapter(business),
         booking_store=payment_store,
         ticketing=ticketing_service,
+        order_url=order_url,
         now=fixed_now,
     )
     return service, business, ticketing_service, payment_store, access_resolver
@@ -655,6 +658,18 @@ def test_known_pre_side_effect_failure_is_returned_without_payment_retry_or_poll
     assert len(business.requests) == 1
     assert ticketing.poll_calls == []
     assert store.consumed is True
+
+
+def test_payment_result_omits_unavailable_public_link() -> None:
+    service, _, _, _, _ = make_payment_service(
+        pay_status=403,
+        order_url=lambda _order_no: None,
+    )
+
+    result = service.pay("paycfm_1")
+
+    assert result.code == "PAYMENT_METHOD_UNAVAILABLE"
+    assert result.data == {"order_no": ORDER_NO}
 
 
 def test_payment_result_never_exposes_credentials_routing_session_product_or_upstream_message() -> None:

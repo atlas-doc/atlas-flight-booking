@@ -38,6 +38,10 @@ def build_booking_runtime(*, mode: CustomerMode = CustomerMode.PROD) -> BookingR
     business = AtlasBusinessClient(settings)
     normalizer = RoutingNormalizer()
     booking_store = BookingStore(secrets=secrets)
+
+    def public_order_url(order_no: str) -> str | None:
+        return resolver.order_url(order_no, mode=mode)
+
     verify = VerifyService(
         secrets=secrets,
         access=access,
@@ -60,14 +64,14 @@ def build_booking_runtime(*, mode: CustomerMode = CustomerMode.PROD) -> BookingR
         access=access,
         adapter=OrderAdapter(business),
         booking_store=booking_store,
-        order_url=resolver.order_url,
+        order_url=public_order_url,
     )
     ticketing = TicketingService(
         secrets=secrets,
         access=access,
         adapter=QueryOrderAdapter(business),
         booking_store=booking_store,
-        order_url=resolver.order_url,
+        order_url=public_order_url,
     )
     payments = PaymentService(
         secrets=secrets,
@@ -75,6 +79,7 @@ def build_booking_runtime(*, mode: CustomerMode = CustomerMode.PROD) -> BookingR
         adapter=PaymentAdapter(business),
         booking_store=booking_store,
         ticketing=ticketing,
+        order_url=public_order_url,
     )
     return BookingRuntime(
         verify=verify,

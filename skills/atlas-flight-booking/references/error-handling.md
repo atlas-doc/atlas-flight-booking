@@ -45,16 +45,16 @@ Branch on `code`; never parse `message`. Keep internal causes out of user-facing
 
 | Code | Agent behavior |
 | --- | --- |
-| `PAYMENT_CONFIRMATION_REQUIRED` | Present the current summary and order link, then wait for explicit approval. |
+| `PAYMENT_CONFIRMATION_REQUIRED` | Present the current summary and the order link when returned, then wait for explicit approval. |
 | `PAYMENT_CONFIRMATION_INVALID` | Do not pay. A fresh order response and confirmation are required. |
 | `PRICE_CHANGED` | Do not create another order. Search and verify again before asking for a new decision. |
 | `ORDER_CREATION_UNAVAILABLE` | Report that the order could not be created and stop. |
 | `PAYMENT_METHOD_UNAVAILABLE` | Report that balance payment is unavailable; show the order link when returned. |
 | `PAYMENT_DEADLINE_EXPIRED` | Report expiry and do not pay. |
-| `ORDER_CREATION_UNKNOWN` / `DUPLICATE_BOOKING_SUSPECTED` | Never create again. Show the order link if returned; otherwise direct the user to ATRIP. |
+| `ORDER_CREATION_UNKNOWN` / `DUPLICATE_BOOKING_SUSPECTED` | Never create again. Show the order link if returned; otherwise report the uncertainty without inventing a URL. |
 | `PAYMENT_STATUS_UNKNOWN` / `PAYMENT_PROCESSING` | Never pay again. Query `order status` using the returned `order_no`. |
-| `TICKETED` | Report issued tickets using only masked CLI fields and show the order link. |
-| `TICKETING_PENDING` | Report that ticketing continues; show the order link. Do not call it failure. |
+| `TICKETED` | Report issued tickets using only masked CLI fields and show the order link when returned. |
+| `TICKETING_PENDING` | Report that ticketing continues; show the order link when returned. Do not call it failure. |
 | `ORDER_CANCELLED` | Report cancellation and show the order link when returned. |
 | `ORDER_NOT_FOUND` | Report that the order could not be found and stop. |
 | `ORDER_STATUS_UNAVAILABLE` | Retry the identical status query at most once when `retryable=true`; never repay. |

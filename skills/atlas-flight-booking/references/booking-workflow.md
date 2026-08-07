@@ -35,7 +35,7 @@ Run order creation once. Never retry it automatically. On `PAYMENT_CONFIRMATION_
 - masked passengers and selected services;
 - ticket, baggage, seat, fee, and total amounts when present;
 - currency, payment deadline, and price-change summary;
-- `data.order_url` so the user can inspect the order on ATRIP.
+- `data.order_url` when present, so the user can inspect the order on ATRIP. Never invent or derive a link when it is absent.
 
 ## 4. Current payment confirmation
 
@@ -47,13 +47,13 @@ After approval, call `atlas-flight order pay` once with the exact `data.payment_
 
 Branch on the payment result:
 
-- `TICKETED`: report success, masked ticket details, and the order link.
-- `TICKETING_PENDING`: explain that processing continues and show the order link. The CLI has already polled for up to 120 seconds.
+- `TICKETED`: report success, masked ticket details, and the order link when returned.
+- `TICKETING_PENDING`: explain that processing continues and show the order link when returned. The CLI has already polled for up to 120 seconds.
 - a stable terminal code: report the neutral meaning from `error-handling.md` and the order link when returned.
 - an unclear payment result: query `atlas-flight order status --order-no {order_no} --json` when `order_no` is returned. Never call `atlas-flight order pay` again.
 
-For later checks, use only `order status`. Do not describe pending ticketing as failure. If status is still pending after the bounded poll, direct the user to `data.order_url` for the latest state.
+For later checks, use only `order status`. Do not describe pending ticketing as failure. If status is still pending after the bounded poll, show `data.order_url` only when present; otherwise say that status can be checked again later.
 
 ## Side-effect uncertainty
 
-On `ORDER_CREATION_UNKNOWN`, do not create another order. Show the returned order link if available; otherwise tell the user that the result could not be confirmed and direct them to ATRIP. On `PAYMENT_STATUS_UNKNOWN`, query only. Never retry order creation or payment even when `retryable=true` appears elsewhere.
+On `ORDER_CREATION_UNKNOWN`, do not create another order. Show the returned order link if available; otherwise report that the result could not be confirmed and do not invent a URL. On `PAYMENT_STATUS_UNKNOWN`, query only. Never retry order creation or payment even when `retryable=true` appears elsewhere.

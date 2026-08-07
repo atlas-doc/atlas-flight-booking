@@ -167,7 +167,7 @@ class TicketingService:
         access: TransactionAccessResolver | AccessManager,
         adapter: OrderQueryGateway | QueryOrderAdapter,
         booking_store: TicketingStore | BookingStore,
-        order_url: Callable[[str], str] | None = None,
+        order_url: Callable[[str], str | None] | None = None,
         monotonic: Callable[[], float] | None = None,
         sleep: Callable[[float], None] | None = None,
     ) -> None:
@@ -180,10 +180,10 @@ class TicketingService:
         self._sleep = sleep or time.sleep
 
     @staticmethod
-    def _order_url_from_access(access: object) -> Callable[[str], str]:
+    def _order_url_from_access(access: object) -> Callable[[str], str | None]:
         candidate = getattr(access, "order_url", None)
         if callable(candidate):
-            return cast(Callable[[str], str], candidate)
+            return cast(Callable[[str], str | None], candidate)
         return lambda order_no: f"https://www.atriptech.com/#/order/detail/{order_no}/en"
 
     def query_once(
@@ -379,7 +379,7 @@ class TicketingService:
     def _pending_result(self, order_no: str) -> CommandResult:
         return success_result(
             "TICKETING_PENDING",
-            "Ticketing is still pending; view the order details for the latest status",
+            "Ticketing is still pending",
             data=self._locator(order_no),
         )
 
@@ -388,4 +388,8 @@ class TicketingService:
         return result.code == "TICKETING_PENDING" or result.code in _POLL_TRANSIENT_CODES
 
     def _locator(self, order_no: str) -> dict[str, object]:
-        return {"order_no": order_no, "order_url": self._order_url(order_no)}
+        locator: dict[str, object] = {"order_no": order_no}
+        order_url = self._order_url(order_no)
+        if order_url is not None:
+            locator["order_url"] = order_url
+        return locator

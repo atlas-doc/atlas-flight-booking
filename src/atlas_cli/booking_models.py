@@ -180,7 +180,7 @@ class VerifiedBookingSeed(BookingModel):
 
 class OrderState(BookingModel):
     order_no: str
-    order_url: str
+    order_url: str | None = None
     total_price: float
     transaction_fee: float
     currency: str

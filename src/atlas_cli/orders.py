@@ -164,7 +164,7 @@ class OrderService:
         access: TransactionAccessResolver | AccessManager,
         adapter: OrderGateway | OrderAdapter,
         booking_store: OrderContextStore | BookingStore,
-        order_url: Callable[[str], str] | None = None,
+        order_url: Callable[[str], str | None] | None = None,
         now: Callable[[], datetime] = _now,
     ) -> None:
         self._secrets = secrets
@@ -252,10 +252,10 @@ class OrderService:
             return self._handle_post_attempt_error(error, access, booking_id)
 
     @staticmethod
-    def _order_url_from_access(access: object) -> Callable[[str], str]:
+    def _order_url_from_access(access: object) -> Callable[[str], str | None]:
         candidate = getattr(access, "order_url", None)
         if callable(candidate):
-            return cast(Callable[[str], str], candidate)
+            return cast(Callable[[str], str | None], candidate)
         return lambda order_no: f"https://www.atriptech.com/#/order/detail/{order_no}/en"
 
     def _access_context(self, booking_id: str) -> tuple[TransactionAccess, BookingContext]:
@@ -389,7 +389,10 @@ class OrderService:
 
     @staticmethod
     def _order_locator(order: OrderState) -> dict[str, object]:
-        return {"order_no": order.order_no, "order_url": order.order_url}
+        locator: dict[str, object] = {"order_no": order.order_no}
+        if order.order_url is not None:
+            locator["order_url"] = order.order_url
+        return locator
 
     def _public_order(self, order: OrderState) -> dict[str, object]:
         return {

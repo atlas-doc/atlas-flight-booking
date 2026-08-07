@@ -19,14 +19,14 @@ Collect missing search inputs, search, and list offers. Verify only an `offer_id
 
 Follow `references/booking-workflow.md` for optional services, order creation, payment, and ticketing. Read `references/passenger-input.md` before collecting passenger details. Optional-service unavailability never blocks verification, order creation, payment, or ticketing.
 
-Before payment, present the CLI's current payment summary and `data.order_url`, then wait for the user's explicit approval of that summary. Use the returned payment confirmation ID exactly once. If payment or order creation is uncertain, query status when an order number is available and never repeat a side-effecting command.
+Before payment, present the CLI's current payment summary and show `data.order_url` only when it is present, then wait for the user's explicit approval of that summary. Use the returned payment confirmation ID exactly once. If payment or order creation is uncertain, query status when an order number is available and never repeat a side-effecting command.
 
 ## Mandatory checkpoints
 
 - 🛑 **AUTHORIZATION:** After presenting the authorization link, stop the turn. Poll only after the user replies that authorization is complete.
 - 🛑 **PRICE INCREASE:** After presenting the old and new totals, stop. Confirm the increased price only after the user explicitly accepts it.
 - 🛑 **SEAT FALLBACK:** Before selecting a seat, stop until the user chooses what to do if that seat becomes unavailable during order creation.
-- 🛑 **PAYMENT:** After presenting the current masked payment summary and order link, stop. Pay only after the user explicitly approves that exact summary.
+- 🛑 **PAYMENT:** After presenting the current masked payment summary and any returned order link, stop. Pay only after the user explicitly approves that exact summary.
 
 ## Safety
 

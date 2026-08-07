@@ -523,6 +523,23 @@ def test_configured_resolver_order_url_is_used_for_external_order() -> None:
     assert service.query_once(ORDER_NO).data["order_url"] == f"https://orders.example/{ORDER_NO}/detail"
 
 
+def test_order_query_omits_unavailable_public_link() -> None:
+    business = FakeBusiness([order_response("2", "1", ["7811234567890"])])
+    service = TicketingService(
+        secrets=Secrets(),
+        access=Access(),
+        adapter=QueryOrderAdapter(business),
+        booking_store=Store(local_order()),
+        order_url=lambda _order_no: None,
+    )
+
+    result = service.query_once(ORDER_NO)
+
+    assert result.code == "TICKETED"
+    assert result.data["order_no"] == ORDER_NO
+    assert "order_url" not in result.data
+
+
 def test_normalizer_rejects_order_number_mismatch_without_echoing_it() -> None:
     service, _, _ = make_ticketing_service([order_response("2", "1", [], order_no="PRIVATE-OTHER-ORDER")])
 

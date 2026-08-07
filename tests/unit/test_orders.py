@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -152,6 +153,7 @@ def make_service(
     *,
     searched_total: float = 100,
     verified_total: float = 100,
+    order_url: Callable[[str], str | None] | None = None,
 ) -> tuple[OrderService, FakeBusiness, BookingStore]:
     tokens = iter(["1", "pay"])
     store = BookingStore(tmp_path, secrets=FakeWorkflowSecretStore(), token_factory=tokens.__next__, now=lambda: NOW)
@@ -161,7 +163,12 @@ def make_service(
     )
     business = FakeBusiness([outcome or response()])
     service = OrderService(
-        secrets=Secrets(), access=Access(), adapter=OrderAdapter(business), booking_store=store, now=lambda: NOW
+        secrets=Secrets(),
+        access=Access(),
+        adapter=OrderAdapter(business),
+        booking_store=store,
+        order_url=order_url,
+        now=lambda: NOW,
     )
     return service, business, store
 
@@ -216,6 +223,19 @@ def test_order_confirmation_is_masked_pii_free_and_current(tmp_path: Path) -> No
     stored = (tmp_path / "contexts.json").read_text()
     assert "P1234567" not in stored and "maria@example.com" not in stored
     assert store.load("book_1", generation=GENERATION).order is not None
+
+
+def test_order_confirmation_omits_unavailable_public_link(tmp_path: Path) -> None:
+    service, _, store = make_service(tmp_path, order_url=lambda _order_no: None)
+
+    result = service.create("book_1", source(), None)
+
+    assert result.code == "PAYMENT_CONFIRMATION_REQUIRED"
+    assert result.data["order_no"] == ORDER_NO
+    assert "order_url" not in result.data
+    order = store.load("book_1", generation=GENERATION).order
+    assert order is not None
+    assert order.order_url is None
 
 
 def test_transport_failure_marks_unknown_and_never_retries_order(tmp_path: Path) -> None:

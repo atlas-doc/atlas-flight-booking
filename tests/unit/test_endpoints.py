@@ -187,3 +187,9 @@ def test_order_url_quotes_only_the_order_number():
     assert EndpointResolver(settings).order_url("AT AX/1") == (
         "https://www.atriptech.com/#/order/detail/AT%20AX%2F1/en"
     )
+
+
+def test_order_url_is_unavailable_outside_production():
+    resolver = EndpointResolver(InternalSettings())
+
+    assert resolver.order_url("TEST-ORDER", mode=CustomerMode.SANDBOX) is None
