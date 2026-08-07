@@ -67,11 +67,10 @@ class BaseSearchAdapter:
         expected_provider = SearchProvider.FARE_COMPARE if fare_compare else SearchProvider.STANDARD
         if route.provider is not expected_provider:
             self._raise_invalid_response(None)
-        response = self._business.post(
-            route,
-            credential,
-            request.to_upstream_payload(self._request_id_factory()),
-        )
+        payload = request.to_upstream_payload(self._request_id_factory())
+        if fare_compare:
+            payload.pop("requestId", None)
+        response = self._business.post(route, credential, payload)
         self._check_status(response)
 
         raw_routings = response.data.get("routings")

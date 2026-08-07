@@ -112,7 +112,7 @@ def test_fare_search_is_reference_only_and_drops_booking_identifier() -> None:
     assert offer.currency == "USD"
     assert [price.subtotal for price in offer.passenger_prices] == [240.0, 90.0]
     assert offer.segments[0].flight_number == "AK701"
-    assert business.calls[0][2]["requestId"] == "client-request"
+    assert "requestId" not in business.calls[0][2]
 
 
 @pytest.mark.parametrize("bookable", [False, True])
@@ -125,6 +125,7 @@ def test_standard_search_retains_identifier_and_uses_route_bookability(bookable:
     assert result.offers[0].upstream_identifier == "booking-token"
     assert result.offers[0].bookable is bookable
     assert result.offers[0].price_status == "current"
+    assert business.calls[0][2]["requestId"] == "client-request"
 
 
 def test_standard_offer_normalizes_ancillary_capabilities() -> None:

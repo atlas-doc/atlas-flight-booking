@@ -75,6 +75,21 @@ def test_post_builds_route_url_and_sends_only_business_headers() -> None:
     assert result.data == {"routings": []}
 
 
+def test_search_route_uses_dedicated_read_timeout() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.extensions["timeout"] == {
+            "connect": 2.5,
+            "read": 30.0,
+            "write": 12.0,
+            "pool": 2.5,
+        }
+        return httpx.Response(200, json={"status": 0, "routings": []})
+
+    result = client_with_handler(httpx.MockTransport(handler)).post(route(), credential(), {})
+
+    assert result.status == 0
+
+
 def test_post_caps_each_timeout_component_to_request_budget() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.extensions["timeout"] == {

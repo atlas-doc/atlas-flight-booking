@@ -51,9 +51,16 @@ class AtlasBusinessClient:
         self._client = client or httpx.Client()
         self._connect_timeout_seconds = settings.connect_timeout_seconds
         self._read_timeout_seconds = settings.read_timeout_seconds
+        self._search_read_timeout_seconds = settings.search_read_timeout_seconds
         self._timeout = httpx.Timeout(
             connect=self._connect_timeout_seconds,
             read=self._read_timeout_seconds,
+            write=self._read_timeout_seconds,
+            pool=self._connect_timeout_seconds,
+        )
+        self._search_timeout = httpx.Timeout(
+            connect=self._connect_timeout_seconds,
+            read=self._search_read_timeout_seconds,
             write=self._read_timeout_seconds,
             pool=self._connect_timeout_seconds,
         )
@@ -81,7 +88,10 @@ class AtlasBusinessClient:
                 url,
                 json=payload,
                 headers=headers,
-                timeout=self._timeout_for(request_timeout_seconds),
+                timeout=self._timeout_for(
+                    request_timeout_seconds,
+                    search=isinstance(route, SearchRoute),
+                ),
             )
         except httpx.RequestError:
             self._raise(
@@ -152,12 +162,20 @@ class AtlasBusinessClient:
         if self._owns_client:
             self._client.close()
 
-    def _timeout_for(self, request_timeout_seconds: float | None) -> httpx.Timeout:
+    def _timeout_for(
+        self,
+        request_timeout_seconds: float | None,
+        *,
+        search: bool,
+    ) -> httpx.Timeout:
         if request_timeout_seconds is None:
-            return self._timeout
+            return self._search_timeout if search else self._timeout
+        read_timeout_seconds = (
+            self._search_read_timeout_seconds if search else self._read_timeout_seconds
+        )
         return httpx.Timeout(
             connect=min(self._connect_timeout_seconds, request_timeout_seconds),
-            read=min(self._read_timeout_seconds, request_timeout_seconds),
+            read=min(read_timeout_seconds, request_timeout_seconds),
             write=min(self._read_timeout_seconds, request_timeout_seconds),
             pool=min(self._connect_timeout_seconds, request_timeout_seconds),
         )

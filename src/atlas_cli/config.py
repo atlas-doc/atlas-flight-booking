@@ -24,6 +24,7 @@ class InternalSettings:
     server_timezone: str = "Asia/Shanghai"
     connect_timeout_seconds: float = 5.0
     read_timeout_seconds: float = 10.0
+    search_read_timeout_seconds: float = 30.0
     poll_interval_seconds: float = 2.0
     ticketing_poll_max_seconds: float = 120.0
 
