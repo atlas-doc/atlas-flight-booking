@@ -80,6 +80,10 @@ check_structure_and_contracts() {
   for phrase in \
     'Explain that Atlas authorization is required before the interrupted task can continue' \
     'descriptive clickable label' \
+    'already has an ATRIP account' \
+    'does not have an account' \
+    'Create one' \
+    'return to the conversation' \
     'Ask the user to reply after completing authorization' \
     'Stop the current turn without polling' \
     'After the user confirms completion'; do

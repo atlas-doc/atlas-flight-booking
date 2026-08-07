@@ -8,7 +8,7 @@ Branch on `code`; never parse `message`. Keep internal causes out of user-facing
 
 | Code | Agent behavior |
 | --- | --- |
-| `AUTHORIZATION_REQUIRED` | Run `atlas-flight auth login --json`. Explain why authorization is needed, present the login response's `data.authorization_url` as a descriptive clickable link, ask the user to reply after completing authorization, and stop without polling. After the user's confirmation, run one bounded poll and resume the interrupted task only after `AUTHORIZED`. |
+| `AUTHORIZATION_REQUIRED` | Run `atlas-flight auth login --json`. Explain why authorization is needed and present the login response's `data.authorization_url` as a descriptive clickable link. Explain that an existing ATRIP account can sign in and authorize; a new user should choose **Create one**, finish registration, then sign in and authorize. Ask the user to return and reply after completing authorization, and stop without polling. After the user's confirmation, run one bounded poll and resume the interrupted task only after `AUTHORIZED`. |
 | `AUTH_PENDING` | Explain that authorization is still incomplete and wait. Poll again only after the user says authorization is complete; never loop automatically. |
 | `AUTH_EXPIRED` / `AUTH_SESSION_MISSING` | Start a new authorization flow. |
 | `AUTH_SERVICE_UNAVAILABLE` | Retain the pending authorization session. Retry the identical auth read once only when `retryable=true`. |

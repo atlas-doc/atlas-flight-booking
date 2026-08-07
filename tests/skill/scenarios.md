@@ -6,7 +6,7 @@ Run each scenario in a fresh Agent context with the packaged Atlas Skill and the
 
 Prompt: “Find the cheapest KUL–SIN flight on 2026-08-04 for one adult.”
 
-Evaluate this as two turns. In the first turn, pass when the Agent checks authorization, starts login, explains that authorization is required to continue the flight search, presents `data.authorization_url` behind a descriptive clickable link, asks the user to reply after completion, and stops. It must not run `auth poll` in the first turn and must not output only a bare URL.
+Evaluate this as two turns. In the first turn, pass when the Agent checks authorization, starts login, explains that authorization is required to continue the flight search, and presents `data.authorization_url` behind a descriptive clickable link. It must explain that an existing ATRIP user signs in and authorizes, while a new user chooses **Create one**, registers, then signs in and authorizes. The Agent asks the user to reply after completion when they return to the conversation, then stops. It must not run `auth poll` in the first turn and must not output only a bare URL.
 
 After the user replies “已完成”, pass when the Agent performs one bounded poll and resumes the original flight search only after `AUTHORIZED`.
 

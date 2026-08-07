@@ -19,7 +19,10 @@ Preserve `search_id`, `offer_id`, `booking_id`, `traveler_id`, `segment_id`, opt
 On `AUTHORIZATION_REQUIRED`:
 
 1. Run login. Explain in the user's language that Atlas authorization is required before the interrupted task can continue.
-2. Use the login response's `data.authorization_url` unchanged as the target of a descriptive clickable label such as “Open Atlas authorization.” Do not display a bare URL or expose other login response fields. Ask the user to reply after completing authorization, state that the interrupted task will then continue, and stop the current turn without polling.
+2. Use the login response's `data.authorization_url` unchanged as the target of a descriptive clickable label such as “Open Atlas authorization.” Do not display a bare URL or expose other login response fields. In the user's language, give these brief page instructions:
+   - If the user already has an ATRIP account, sign in and complete authorization.
+   - If the user does not have an account, choose **Create one**, finish registration, then sign in and complete authorization.
+   Ask the user to reply after completing authorization, remind them to return to the conversation, state that the interrupted task will then continue, and stop the current turn without polling.
 3. After the user confirms completion, run the bounded poll once. Resume the interrupted task only after `AUTHORIZED`. On `AUTH_PENDING`, explain that authorization is still incomplete and wait for the user; do not start an automatic polling loop.
 
 ## Search and verify

@@ -11,7 +11,7 @@ Operate through the Atlas Flight Booking CLI only. Preserve every opaque ID exac
 
 Run `atlas-flight --version`. If the command is unavailable, explain that Atlas Flight Booking requires its CLI and ask for permission to install it. After permission, run exactly `uv tool install --python 3.12 git+https://github.com/atlas-doc/atlas-flight-booking.git`, then verify `atlas-flight --version`. If `uv` is unavailable, direct the user to `https://docs.astral.sh/uv/getting-started/installation/` and stop; do not install through another Python environment.
 
-Then run `atlas-flight auth status --json`. If authorization is required, follow `references/cli-contract.md`. Explain that Atlas authorization is required before the interrupted task can continue, present the returned URL as a descriptive clickable link, and ask the user to reply after completing authorization. Stop the current turn without polling. After the user confirms completion, poll once for at most 120 seconds and resume the interrupted task only after `AUTHORIZED`.
+Then run `atlas-flight auth status --json`. If authorization is required, follow `references/cli-contract.md`. Explain that Atlas authorization is required before the interrupted task can continue and present the returned URL as a descriptive clickable link. Briefly explain what the user will do on the page: sign in and authorize with an existing ATRIP account, or choose **Create one**, finish registration, then sign in and authorize. Ask the user to return to the conversation and reply after authorization is complete. Stop the current turn without polling. After the user confirms completion, poll once for at most 120 seconds and resume the interrupted task only after `AUTHORIZED`.
 
 ## Search and booking
 
@@ -23,7 +23,7 @@ Before payment, present the CLI's current payment summary and show `data.order_u
 
 ## Mandatory checkpoints
 
-- 🛑 **AUTHORIZATION:** After presenting the authorization link, stop the turn. Poll only after the user replies that authorization is complete.
+- 🛑 **AUTHORIZATION:** After presenting the authorization link and the existing-account/new-account instructions, stop the turn. Poll only after the user replies that authorization is complete.
 - 🛑 **PRICE INCREASE:** After presenting the old and new totals, stop. Confirm the increased price only after the user explicitly accepts it.
 - 🛑 **SEAT FALLBACK:** Before selecting a seat, stop until the user chooses what to do if that seat becomes unavailable during order creation.
 - 🛑 **PAYMENT:** After presenting the current masked payment summary and any returned order link, stop. Pay only after the user explicitly approves that exact summary.
