@@ -150,7 +150,10 @@ class AccessManager:
             url = self._resolver.subscription_url
             raise AccessManagerError(
                 code="SUBSCRIPTION_REQUIRED",
-                message=f"出票需订阅套餐，详见 {url}",
+                message=(
+                    "当前账号尚未开通出票能力，请前往 ATRIP 工作台按页面提示完成开通流程："
+                    f"{url}"
+                ),
                 request_id=snapshot.request_id,
                 details={"url": url},
             )

@@ -114,7 +114,7 @@ def test_transaction_access_requires_live_and_top_up(
         manager.resolve_transaction_access("jwt-value", BusinessOperation.VERIFY)
 
     assert raised.value.code == "SUBSCRIPTION_REQUIRED"
-    assert raised.value.details == {"url": "https://www.atriptech.com/#/skill-entry"}
+    assert raised.value.details == {"url": "https://www.atriptech.com/#/workspace"}
 
 
 def test_transaction_access_uses_production_credential_without_exposing_it() -> None:
@@ -229,8 +229,11 @@ def test_ineligible_transaction_with_missing_search_credential_requires_subscrip
         manager.resolve_transaction_access("jwt-value", BusinessOperation.VERIFY)
 
     assert raised.value.code == "SUBSCRIPTION_REQUIRED"
-    assert raised.value.message == ("出票需订阅套餐，详见 https://www.atriptech.com/#/skill-entry")
-    assert raised.value.details == {"url": "https://www.atriptech.com/#/skill-entry"}
+    assert raised.value.message == (
+        "当前账号尚未开通出票能力，请前往 ATRIP 工作台按页面提示完成开通流程："
+        "https://www.atriptech.com/#/workspace"
+    )
+    assert raised.value.details == {"url": "https://www.atriptech.com/#/workspace"}
     assert raised.value.request_id == "access-request-id"
 
 

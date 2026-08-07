@@ -19,7 +19,7 @@ class InternalSettings:
     prod_api_base_url: str = "https://api-sg.atriptech.com"
     sandbox_api_base_url: str = "https://sandbox.atriptech.com"
     authorization_page_url: str = "https://www.atriptech.com/#/login"
-    subscription_page_url: str = "https://www.atriptech.com/#/skill-entry"
+    subscription_page_url: str = "https://www.atriptech.com/#/workspace"
     order_detail_url_template: str = "https://www.atriptech.com/#/order/detail/{order_no}/en"
     server_timezone: str = "Asia/Shanghai"
     connect_timeout_seconds: float = 5.0

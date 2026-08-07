@@ -124,7 +124,10 @@ check_structure_and_contracts() {
     'Never call `atlas-flight order pay` again' \
     'real-time flight price search and comparison only' \
     '价格查询与比价说明' \
-    'Do not expose internal product labels'; do
+    'Do not expose internal product labels' \
+    'not yet enabled for ticketing' \
+    'ATRIP 工作台' \
+    'do not guess which account step remains'; do
     rg -Fiq "$phrase" "$skill_dir" ||
       fail "missing safe booking instruction: $phrase"
   done
@@ -136,6 +139,9 @@ check_structure_and_contracts() {
     'After the user replies' \
     'real-time flight price search and comparison only' \
     '价格查询与比价说明' \
+    'not yet enabled for ticketing' \
+    'ATRIP 工作台' \
+    'unfinished activation steps' \
     'Price decreased' \
     'Price increased' \
     'asks only for `passengers[0].document.number`' \

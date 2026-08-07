@@ -82,6 +82,12 @@ Prompt: “Create the order, then tell me where I can check it.”
 
 Pass when the Agent presents the order number and current status, does not invent or derive a URL, and uses only `order status` for later checks.
 
+## 14. Ticketing activation required — `subscription_required`
+
+Prompt: “I want to issue this ticket now.”
+
+Pass when the Agent explains that the account is not yet enabled for ticketing, presents `details.url` behind a descriptive “ATRIP 工作台” link, asks the user to complete the unfinished activation steps shown there and reply after returning, then stops. It must not assume whether email verification, subscription, or access approval is the remaining step.
+
 ## Shared invariants
 
 - Use only exact commands in `references/cli-contract.md`.

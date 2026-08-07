@@ -48,7 +48,7 @@ case "${scenario}:${command_line}" in
     emit '{"schema_version":"1","status":"terminal_error","code":"OFFER_EXPIRED","message":"Offer expired; search again","retryable":false,"data":{},"details":{}}' 30
     ;;
   subscription_required:'offer verify --offer-id off_example --json')
-    emit '{"schema_version":"1","status":"action_required","code":"SUBSCRIPTION_REQUIRED","message":"Ticketing requires a subscription","retryable":false,"data":{},"details":{"url":"https://purchase.invalid/plans"}}'
+    emit '{"schema_version":"1","status":"action_required","code":"SUBSCRIPTION_REQUIRED","message":"Ticketing is not enabled for this account","retryable":false,"data":{},"details":{"url":"https://www.atriptech.com/#/workspace"}}'
     ;;
   price_decreased:'offer verify --offer-id off_example --json')
     emit '{"schema_version":"1","status":"success","code":"OFFER_VERIFIED","message":"Offer verified","retryable":false,"data":{"booking_id":"book_decreased","previous_price":120.00,"current_price":100.00,"currency":"USD","price_change":"decreased","requirements":{"required_fields":["name","passenger_type","gender","document.type","document.number"]},"travelers":[{"traveler_id":"trav_1","passenger_type":"adult"}],"segments":[{"segment_id":"seg_1","segment_index":1}],"baggage_supported":true,"seat_supported":true},"details":{}}'
