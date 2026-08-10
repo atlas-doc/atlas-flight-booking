@@ -269,6 +269,16 @@ def booking_error_result(
             status = CommandStatus.RETRYABLE_ERROR
         else:
             status = CommandStatus.TERMINAL_ERROR
+    public_details: dict[str, object] = {}
+    raw_details = getattr(error, "details", None)
+    if isinstance(raw_details, dict):
+        url = raw_details.get("url")
+        if isinstance(url, str) and url:
+            public_details["url"] = url
+        blocker = raw_details.get("ticketing_blocker")
+        if blocker in {"TICKETING_ACTIVATION_REQUIRED", "TOP_UP_REQUIRED"}:
+            public_details["ticketing_blocker"] = blocker
+    public_details.update(details or {})
     return CommandResult(
         status=status,
         code=code,
@@ -276,5 +286,5 @@ def booking_error_result(
         retryable=retryable_error,
         request_id=request_id if isinstance(request_id, str) else None,
         data=data or {},
-        details=details or {},
+        details=public_details,
     )

@@ -307,6 +307,7 @@ def test_completed_exchange_returns_ticketing_activation_url_when_unavailable() 
         "search_available": True,
         "ticketing_available": False,
         "ticketing_activation_url": "https://www.atriptech.com/#/workspace",
+        "ticketing_blocker": "TOP_UP_REQUIRED",
     }
 
 
@@ -428,6 +429,7 @@ def test_synchronized_authorization_returns_ticketing_activation_url_when_unavai
         "search_available": True,
         "ticketing_available": False,
         "ticketing_activation_url": "https://www.atriptech.com/#/workspace",
+        "ticketing_blocker": "TICKETING_ACTIVATION_REQUIRED",
     }
 
 

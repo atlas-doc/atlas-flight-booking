@@ -5,7 +5,7 @@ from __future__ import annotations
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import NoReturn, Protocol
+from typing import Literal, NoReturn, Protocol
 
 from atlas_cli.api_models import (
     AccessCredentialRecord,
@@ -62,6 +62,17 @@ class AccessManagerError(RuntimeError):
 
 def ticketing_available(activation_status: int, top_up_completed: bool) -> bool:
     return activation_status == 3 and top_up_completed
+
+
+type TicketingBlocker = Literal["TICKETING_ACTIVATION_REQUIRED", "TOP_UP_REQUIRED"]
+
+
+def ticketing_blocker(activation_status: int, top_up_completed: bool) -> TicketingBlocker | None:
+    if activation_status != 3:
+        return "TICKETING_ACTIVATION_REQUIRED"
+    if not top_up_completed:
+        return "TOP_UP_REQUIRED"
+    return None
 
 
 @dataclass(frozen=True)
@@ -148,6 +159,8 @@ class AccessManager:
         )
         if selected_mode is CustomerMode.PROD and not snapshot.ticketing_available:
             url = self._resolver.subscription_url
+            blocker = ticketing_blocker(snapshot.activation_status, snapshot.top_up_completed)
+            assert blocker is not None
             raise AccessManagerError(
                 code="SUBSCRIPTION_REQUIRED",
                 message=(
@@ -155,7 +168,7 @@ class AccessManager:
                     f"{url}"
                 ),
                 request_id=snapshot.request_id,
-                details={"url": url},
+                details={"url": url, "ticketing_blocker": blocker},
             )
 
         route = self._resolver.resolve_business(

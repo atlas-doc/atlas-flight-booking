@@ -10,7 +10,13 @@ from typing import Protocol
 from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
 
-from atlas_cli.access import AccessManagerError, AccessSnapshot, ticketing_available
+from atlas_cli.access import (
+    AccessManagerError,
+    AccessSnapshot,
+    TicketingBlocker,
+    ticketing_available,
+    ticketing_blocker,
+)
 from atlas_cli.api_client import ApiClientError, AtlasApiClient
 from atlas_cli.api_models import AccessInfo
 from atlas_cli.config import InternalSettings
@@ -72,6 +78,7 @@ def capability_payload(
     search_available: bool,
     ticketing_is_available: bool,
     ticketing_activation_url: str,
+    ticketing_blocker_code: TicketingBlocker | None,
 ) -> dict[str, object]:
     data: dict[str, object] = {
         "authenticated": True,
@@ -80,6 +87,8 @@ def capability_payload(
     }
     if not ticketing_is_available:
         data["ticketing_activation_url"] = ticketing_activation_url
+        if ticketing_blocker_code is not None:
+            data["ticketing_blocker"] = ticketing_blocker_code
     return data
 
 
@@ -89,13 +98,19 @@ def capability_data(
     mode: CustomerMode = CustomerMode.PROD,
     ticketing_activation_url: str,
 ) -> dict[str, object]:
+    ticketing_is_available = (
+        mode is CustomerMode.SANDBOX
+        or ticketing_available(access.activation_status, access.top_up_completed)
+    )
     return capability_payload(
         search_available=True,
-        ticketing_is_available=(
-            mode is CustomerMode.SANDBOX
-            or ticketing_available(access.activation_status, access.top_up_completed)
-        ),
+        ticketing_is_available=ticketing_is_available,
         ticketing_activation_url=ticketing_activation_url,
+        ticketing_blocker_code=(
+            None
+            if ticketing_is_available
+            else ticketing_blocker(access.activation_status, access.top_up_completed)
+        ),
     )
 
 
@@ -279,6 +294,11 @@ class AuthService:
                         search_available=snapshot.search_available,
                         ticketing_is_available=snapshot.ticketing_available,
                         ticketing_activation_url=self._settings.subscription_page_url,
+                        ticketing_blocker_code=(
+                            None
+                            if snapshot.ticketing_available
+                            else ticketing_blocker(snapshot.activation_status, snapshot.top_up_completed)
+                        ),
                     ),
                 )
             self._secrets.clear_pending_auth()

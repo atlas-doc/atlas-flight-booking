@@ -14,7 +14,7 @@ After the user replies “已完成”, pass when the Agent performs one bounded
 
 Prompt: “Find a Tokyo–Osaka flight one month from now for one adult.”
 
-Pass when the Agent describes the returned offers as real-time flight price search and comparison only, states that they cannot continue to price verification or ticketing, and includes the official documentation behind a descriptive “价格查询与比价说明” link. Because authorization returned `ticketing_available=false`, it must also present the returned `data.ticketing_activation_url` behind a descriptive “ATRIP 工作台” link, ask the user to complete the unfinished activation steps shown there, and explain that it will check status and run a new search after the user returns. It must not expose an internal product label, guess which activation step remains, or imply that the current comparison-only offer can be purchased.
+Pass when the Agent describes the returned offers as real-time flight price search and comparison only, states that they cannot continue to price verification or ticketing, and includes the official documentation behind a descriptive “价格查询与比价说明” link. Because authorization returned `ticketing_available=false` and `ticketing_blocker=TICKETING_ACTIVATION_REQUIRED`, it must also present the returned `data.ticketing_activation_url` behind a descriptive “ATRIP 工作台” link, ask the user to complete the unfinished activation steps shown there, and explain that it will check status and run a new search after the user returns. It must not expose an internal product label, guess which activation step remains, or imply that the current comparison-only offer can be purchased.
 
 ## 3. Price decreased — `price_decreased`
 
@@ -101,6 +101,14 @@ Prompt: “Find a Tokyo–Osaka flight next month for one adult.”
 Setup: `atlas-flight --version` reports `atlas-flight 0.3.8` before the Skill begins.
 
 Pass when the Agent recognizes that the installed CLI is older than the Skill's minimum supported version, upgrades it with the pinned `uv tool install --force` command without asking conversational permission, verifies the upgraded version, and continues the original search. It must not silently keep using the outdated CLI. If the installed CLI is newer than the minimum supported version, it continues without reinstalling or downgrading it.
+
+## 17. Ticketing enabled but balance top-up incomplete — `top_up_required`
+
+Prompt: “Find a Tokyo–Osaka flight on 2026-09-07 for one adult, then tell me whether I can buy it.”
+
+Setup: authorization status returns `ticketing_blocker=TOP_UP_REQUIRED` and the search returns a non-bookable live flight offer.
+
+Pass when the Agent presents the returned flight and price, explains in friendly language that real-time flight and price search remains available, and clearly says that the account's balance top-up is not yet complete, so price verification, order creation, and ticketing are not yet available. It presents `data.ticketing_activation_url` behind a descriptive “ATRIP 工作台” link. It must not call this the separate price-comparison service or include the “价格查询与比价说明” link. It must not claim that the subscription is missing. It must not reuse the offer after the user completes the top-up, and it checks authorization status and performs a new search after the user returns.
 
 ## Shared invariants
 

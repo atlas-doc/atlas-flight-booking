@@ -83,9 +83,23 @@ def test_status_with_access_maps_capabilities() -> None:
         "search_available": True,
         "ticketing_available": False,
         "ticketing_activation_url": "https://www.atriptech.com/#/workspace",
+        "ticketing_blocker": "TOP_UP_REQUIRED",
     }
     assert result.request_id == "req-access"
     assert api.jwt_calls == ["jwt-value"]
+
+
+def test_status_distinguishes_pending_ticketing_activation_from_missing_top_up() -> None:
+    credentials = Credentials(jwt="jwt-value", client_code="CLIENT", cid="CUSTOMER")
+    service, _, _ = make_service(
+        credentials,
+        AccessInfo(activation_status=2, top_up_completed=False, access_info_exists=True),
+    )
+
+    result = service.status()
+
+    assert result.data["ticketing_available"] is False
+    assert result.data["ticketing_blocker"] == "TICKETING_ACTIVATION_REQUIRED"
 
 
 def test_access_info_exists_does_not_gate_live_topped_up_ticketing() -> None:
@@ -116,6 +130,7 @@ def test_sandbox_status_reports_transaction_capability_without_exposing_mode() -
         "search_available": True,
         "ticketing_available": True,
     }
+    assert "ticketing_blocker" not in result.data
     assert "sandbox" not in str(result.model_dump()).lower()
 
 

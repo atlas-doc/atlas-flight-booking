@@ -72,11 +72,11 @@ check_structure_and_contracts() {
     fail "authorization URL provenance is not explicit"
   rg -Fiq 'retain the pending authorization session' "$error_ref" ||
     fail "auth service outage must retain pending session"
-  rg -Fq 'uv tool install --force --python 3.12 atlas-flight-booking==0.3.10' "$skill_dir/SKILL.md" ||
+  rg -Fq 'uv tool install --force --python 3.12 atlas-flight-booking==0.3.11' "$skill_dir/SKILL.md" ||
     fail "missing exact PyPI CLI installation command"
   for phrase in \
     'minimum supported CLI version' \
-    'version is older than `0.3.10`' \
+    'version is older than `0.3.11`' \
     'never downgrade a newer CLI' \
     'installation or upgrade actually fails'; do
     rg -Fiq "$phrase" "$skill_dir/SKILL.md" ||
@@ -141,10 +141,16 @@ check_structure_and_contracts() {
     'real-time flight price search and comparison only' \
     '价格查询与比价说明' \
     '`data.ticketing_activation_url`' \
+    '`data.ticketing_blocker`' \
+    '`TOP_UP_REQUIRED`' \
+    'continue searching real-time flights and prices' \
+    'balance top-up is not yet complete' \
+    'price verification, order creation, and ticketing are not yet available' \
+    'Do not describe these results as the separate price-comparison service' \
     'Do not expose internal product labels' \
     'not yet enabled for ticketing' \
     'ATRIP 工作台' \
-    'do not guess which account step remains'; do
+    'without guessing which activation step remains'; do
     rg -Fiq "$phrase" "$skill_dir" ||
       fail "missing safe booking instruction: $phrase"
   done
@@ -157,9 +163,14 @@ check_structure_and_contracts() {
     'real-time flight price search and comparison only' \
     '价格查询与比价说明' \
     '`data.ticketing_activation_url`' \
+    '`ticketing_blocker=TOP_UP_REQUIRED`' \
     'not yet enabled for ticketing' \
     'ATRIP 工作台' \
     'unfinished activation steps' \
+    'real-time flight and price search remains available' \
+    "balance top-up is not yet complete" \
+    'must not call this the separate price-comparison service' \
+    'must not claim that the subscription is missing' \
     'Price decreased' \
     'Price increased' \
     'asks only for `passengers[0].document.number`' \
@@ -236,9 +247,9 @@ fixture_rejects() {
 check_fixture() {
   for scenario in happy_path auth_required no_results search_limit search_retryable comparison_only offer_expired \
     auth_service_unavailable price_decreased price_increased baggage_unavailable seat_unavailable \
-    passenger_required contact_invalid order_ready order_without_link payment_unknown ticketing_pending ticketed subscription_required; do
+    passenger_required contact_invalid order_ready order_without_link payment_unknown ticketing_pending ticketed subscription_required top_up_required; do
     version="$(PATH="$PWD/tests/skill/fixtures:$PATH" ATLAS_TEST_SCENARIO="$scenario" atlas-flight --version)"
-    test "$version" = 'atlas-flight 0.3.10' || fail "inconsistent plain-text version for $scenario: $version"
+    test "$version" = 'atlas-flight 0.3.11' || fail "inconsistent plain-text version for $scenario: $version"
   done
 
   fixture_json auth_required AUTHORIZATION_REQUIRED auth status --json
@@ -253,6 +264,8 @@ check_fixture() {
   fixture_json search_limit SEARCH_LIMIT_REACHED search --origin KUL --destination SIN --depart 2026-08-04 --adults 1 --json
   fixture_json search_retryable SERVICE_TEMPORARILY_UNAVAILABLE search --origin KUL --destination SIN --depart 2026-08-04 --adults 1 --json
   fixture_json comparison_only FLIGHT_SEARCHED search --origin TYO --destination OSA --depart 2026-09-07 --adults 1 --json
+  fixture_json top_up_required AUTHORIZED auth status --json
+  fixture_json top_up_required FLIGHT_SEARCHED search --origin TYO --destination OSA --depart 2026-09-07 --adults 1 --json
   fixture_json offer_expired OFFER_EXPIRED offer list --search-id srch_old --json
   fixture_json subscription_required SUBSCRIPTION_REQUIRED offer verify --offer-id off_example --json
   fixture_json price_decreased OFFER_VERIFIED offer verify --offer-id off_example --json

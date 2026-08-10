@@ -46,7 +46,7 @@ Optional baggage or seat unavailability does not block the main booking flow. Th
 
 ## Automatic CLI setup
 
-The Skill checks the CLI version when it starts. If the CLI is missing or older than the minimum supported version, the Agent automatically installs `uv` from Astral's official standalone installer when needed, then installs or upgrades the signed Atlas CLI release from [PyPI](https://pypi.org/project/atlas-flight-booking/) with `uv tool install --force --python 3.12 atlas-flight-booking==0.3.10`. A newer CLI is never downgraded. Users do not need to install either tool separately. The Agent only stops when automatic installation or upgrade actually fails.
+The Skill checks the CLI version when it starts. If the CLI is missing or older than the minimum supported version, the Agent automatically installs `uv` from Astral's official standalone installer when needed, then installs or upgrades the signed Atlas CLI release from [PyPI](https://pypi.org/project/atlas-flight-booking/) with `uv tool install --force --python 3.12 atlas-flight-booking==0.3.11`. A newer CLI is never downgraded. Users do not need to install either tool separately. The Agent only stops when automatic installation or upgrade actually fails.
 
 [Installation details and troubleshooting →](docs/installation.md)
 

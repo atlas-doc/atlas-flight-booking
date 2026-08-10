@@ -12,7 +12,7 @@ Branch on `code`; never parse `message`. Keep internal causes out of user-facing
 | `AUTH_PENDING` | Explain that authorization is still incomplete and wait. Poll again only after the user says authorization is complete; never loop automatically. |
 | `AUTH_EXPIRED` / `AUTH_SESSION_MISSING` | Start a new authorization flow. |
 | `AUTH_SERVICE_UNAVAILABLE` | Retain the pending authorization session. Retry the identical auth read once only when `retryable=true`. |
-| `SUBSCRIPTION_REQUIRED` | Explain that the account is not yet enabled for ticketing. Present the returned `details.url` as a descriptive “ATRIP 工作台” link in Chinese or its natural equivalent in the user's language. Ask the user to follow the unfinished activation steps shown there, return to the conversation, and reply after completion. Stop the turn; do not guess which account step remains. |
+| `SUBSCRIPTION_REQUIRED` | Branch on the optional normalized `details.ticketing_blocker`. For `TOP_UP_REQUIRED`, explain that real-time flight and price search remains available, but the balance top-up is not yet complete, so price verification, order creation, and ticketing are unavailable. For `TICKETING_ACTIVATION_REQUIRED` or a missing blocker, explain that the account is not yet enabled for ticketing without guessing which activation step remains. Present `details.url` as a descriptive “ATRIP 工作台” link and wait for the user to complete the indicated step. |
 | `SECURE_STORE_UNAVAILABLE` | Report that secure local storage is unavailable and stop. |
 | `CREDENTIAL_REJECTED` | Report the neutral CLI result and stop; recovery is already exhausted. |
 

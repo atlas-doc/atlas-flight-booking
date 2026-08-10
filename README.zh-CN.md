@@ -46,7 +46,7 @@ Skill 负责对话流程和用户确认；`atlas-flight` CLI 负责授权、安�
 
 ## CLI 自动配置
 
-Skill 启动后会检查 CLI 版本。如果 CLI 没有安装或低于最低兼容版本，Agent 会在需要时通过 Astral 官方独立安装器自动安装 `uv`，然后执行 `uv tool install --force --python 3.12 atlas-flight-booking==0.3.10`，从 [PyPI](https://pypi.org/project/atlas-flight-booking/) 安装或升级 Atlas CLI。高于最低兼容版本的 CLI 不会被降级。用户不需要单独安装这两个工具；只有自动安装或升级实际失败时，Agent 才会停止并提供简短的恢复说明。
+Skill 启动后会检查 CLI 版本。如果 CLI 没有安装或低于最低兼容版本，Agent 会在需要时通过 Astral 官方独立安装器自动安装 `uv`，然后执行 `uv tool install --force --python 3.12 atlas-flight-booking==0.3.11`，从 [PyPI](https://pypi.org/project/atlas-flight-booking/) 安装或升级 Atlas CLI。高于最低兼容版本的 CLI 不会被降级。用户不需要单独安装这两个工具；只有自动安装或升级实际失败时，Agent 才会停止并提供简短的恢复说明。
 
 [安装详情与故障排查 →](docs/installation.zh-CN.md)
 

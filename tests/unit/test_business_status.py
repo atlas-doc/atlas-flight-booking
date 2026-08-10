@@ -191,6 +191,25 @@ def test_booking_error_result_renders_access_requirements_as_action_required() -
     assert result.message == "Subscription required"
 
 
+def test_booking_error_result_exposes_only_safe_ticketing_guidance() -> None:
+    result = booking_error_result(
+        AccessManagerError(
+            code="SUBSCRIPTION_REQUIRED",
+            message="Subscription required",
+            details={
+                "url": "https://www.atriptech.com/#/workspace",
+                "ticketing_blocker": "TOP_UP_REQUIRED",
+                "private": "do-not-copy",
+            },
+        ),
+    )
+
+    assert result.details == {
+        "url": "https://www.atriptech.com/#/workspace",
+        "ticketing_blocker": "TOP_UP_REQUIRED",
+    }
+
+
 def test_booking_error_result_renders_retryable_transport_error() -> None:
     result = booking_error_result(
         ApiClientError(code="TRANSPORT_UNAVAILABLE", message="Service unavailable", retryable=True),
