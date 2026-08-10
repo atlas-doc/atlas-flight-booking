@@ -355,7 +355,6 @@ def test_durable_replace_failure_prevents_payment_call(
         (402, PaymentState.UNKNOWN),
         (404, PaymentState.UNKNOWN),
         (406, PaymentState.PROCESSING),
-        (411, PaymentState.UNKNOWN),
         (615, PaymentState.PROCESSING),
     ],
 )
@@ -371,6 +370,46 @@ def test_uncertain_or_processing_payment_never_repeats_pay(
     assert ticketing.poll_calls == [(ORDER_NO, 120.0)]
     assert store.updates == [saved_state]
     assert result.code in {"TICKETED", "TICKETING_PENDING", "PAYMENT_STATUS_UNKNOWN"}
+
+
+def test_payment_gateway_error_checks_order_then_prompts_for_possible_insufficient_balance() -> None:
+    ticketing = Ticketing(
+        action_required_result(
+            "PAYMENT_STATUS_UNKNOWN",
+            "Payment status could not be confirmed",
+            request_id="req-query-safe",
+            data={"order_no": ORDER_NO},
+        )
+    )
+    service, business, _, store, _ = make_payment_service(pay_status=411, ticketing=ticketing)
+
+    result = service.pay("paycfm_1")
+
+    assert result.status is CommandStatus.ACTION_REQUIRED
+    assert result.code == "PAYMENT_BALANCE_CHECK_REQUIRED"
+    assert result.message == (
+        "Payment could not be confirmed; check the ATRIP balance because it may be insufficient"
+    )
+    assert result.retryable is False
+    assert result.request_id == "req-query-safe"
+    assert result.data == {
+        "order_no": ORDER_NO,
+        "order_url": f"https://www.atriptech.com/#/order/detail/{ORDER_NO}/en",
+    }
+    assert business.requests == [{"orderNo": ORDER_NO, "paymentMethod": 1}]
+    assert ticketing.poll_calls == [(ORDER_NO, 120.0)]
+    assert store.updates == [PaymentState.UNKNOWN]
+
+
+def test_payment_gateway_error_returns_confirmed_ticketing_result_without_balance_warning() -> None:
+    service, business, ticketing, store, _ = make_payment_service(pay_status=411)
+
+    result = service.pay("paycfm_1")
+
+    assert result.code == "TICKETED"
+    assert business.requests == [{"orderNo": ORDER_NO, "paymentMethod": 1}]
+    assert ticketing.poll_calls == [(ORDER_NO, 120.0)]
+    assert store.updates == [PaymentState.UNKNOWN]
 
 
 def test_confirmation_cannot_be_reused_even_after_transport_timeout() -> None:

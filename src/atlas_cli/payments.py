@@ -131,7 +131,8 @@ class PaymentService:
                     if error.upstream_status in _PROCESSING_PAYMENT_STATUSES
                     else PaymentState.UNKNOWN
                 )
-                return self._recover(order.order_no, state, locator)
+                unresolved_error = error if error.upstream_status == 411 else None
+                return self._recover(order.order_no, state, locator, unresolved_error=unresolved_error)
             self._update_payment_best_effort(order.order_no, PaymentState.UNKNOWN)
             return booking_error_result(error, data=locator)
         except BusinessApiError:
@@ -170,9 +171,19 @@ class PaymentService:
         order_no: str,
         state: PaymentState,
         locator: dict[str, object],
+        *,
+        unresolved_error: BookingApiError | None = None,
     ) -> CommandResult:
         self._update_payment_best_effort(order_no, state)
-        return self._poll_after_payment(order_no, locator)
+        result = self._poll_after_payment(order_no, locator)
+        if unresolved_error is not None and result.code == "PAYMENT_STATUS_UNKNOWN":
+            return action_required_result(
+                unresolved_error.code,
+                unresolved_error.message,
+                request_id=result.request_id or unresolved_error.request_id,
+                data={**result.data, **locator},
+            )
+        return result
 
     def _poll_after_payment(
         self,

@@ -59,7 +59,7 @@ check_structure_and_contracts() {
     BAGGAGE_UNAVAILABLE \
     SEAT_UNAVAILABLE ANCILLARY_SELECTION_INVALID PASSENGER_INFO_REQUIRED \
     PASSENGER_INFO_INVALID CONTACT_INFO_INVALID ORDER_CREATION_UNKNOWN PAYMENT_CONFIRMATION_REQUIRED \
-    PAYMENT_CONFIRMATION_INVALID PAYMENT_STATUS_UNKNOWN PAYMENT_METHOD_UNAVAILABLE \
+    PAYMENT_CONFIRMATION_INVALID PAYMENT_STATUS_UNKNOWN PAYMENT_METHOD_UNAVAILABLE PAYMENT_BALANCE_CHECK_REQUIRED \
     TICKETED TICKETING_PENDING ORDER_CANCELLED ORDER_STATUS_UNAVAILABLE \
     ORDER_CREATION_UNAVAILABLE UNSUPPORTED_BOOKING_FLOW BOOKING_STATE_INVALID \
     ORDER_STATE_INVALID; do
@@ -186,6 +186,14 @@ check_structure_and_contracts() {
       fail "missing booking evaluation scenario: $phrase"
   done
   for phrase in \
+    'Payment gateway balance check' \
+    'balance may be insufficient' \
+    'must not claim that insufficient balance is the only possible cause' \
+    'call payment again'; do
+    rg -Fiq "$phrase" "$scenarios" ||
+      fail "missing payment balance-check evaluation: $phrase"
+  done
+  for phrase in \
     "Astral's official standalone installer" \
     'without asking conversational permission' \
     'without asking the user to restart the terminal' \
@@ -247,7 +255,7 @@ fixture_rejects() {
 check_fixture() {
   for scenario in happy_path auth_required no_results search_limit search_retryable comparison_only offer_expired \
     auth_service_unavailable price_decreased price_increased baggage_unavailable seat_unavailable \
-    passenger_required contact_invalid order_ready order_without_link payment_unknown ticketing_pending ticketed subscription_required top_up_required; do
+    passenger_required contact_invalid order_ready order_without_link payment_unknown payment_balance_check ticketing_pending ticketed subscription_required top_up_required; do
     version="$(PATH="$PWD/tests/skill/fixtures:$PATH" ATLAS_TEST_SCENARIO="$scenario" atlas-flight --version)"
     test "$version" = 'atlas-flight 0.3.11' || fail "inconsistent plain-text version for $scenario: $version"
   done
@@ -291,6 +299,7 @@ check_fixture() {
   fixture_json happy_path PAYMENT_CONFIRMATION_REQUIRED order create --booking-id book_example --passengers-stdin --seat-policy accept-similar-seat --json
   fixture_json happy_path TICKETED order pay --confirmation-id paycfm_current --json
   fixture_json payment_unknown PAYMENT_STATUS_UNKNOWN order pay --confirmation-id paycfm_current --json
+  fixture_json payment_balance_check PAYMENT_BALANCE_CHECK_REQUIRED order pay --confirmation-id paycfm_current --json
   fixture_json payment_unknown TICKETING_PENDING order status --order-no ATORDEREXAMPLE --json
   fixture_json ticketing_pending TICKETING_PENDING order status --order-no ATORDEREXAMPLE --json
   fixture_json ticketed TICKETED order status --order-no ATORDEREXAMPLE --json

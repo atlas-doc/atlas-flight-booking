@@ -45,6 +45,9 @@ PUBLIC_MESSAGES: dict[str, str] = {
     "PAYMENT_METHOD_UNAVAILABLE": "Balance payment is unavailable for this order",
     "PAYMENT_DEADLINE_EXPIRED": "Payment deadline expired",
     "PAYMENT_STATUS_UNKNOWN": "Payment status could not be confirmed",
+    "PAYMENT_BALANCE_CHECK_REQUIRED": (
+        "Payment could not be confirmed; check the ATRIP balance because it may be insufficient"
+    ),
     "PAYMENT_PROCESSING": "Payment is processing",
     "ORDER_NOT_FOUND": "Order could not be found",
     "ORDER_STATUS_UNAVAILABLE": "Order status is temporarily unavailable",
@@ -146,7 +149,7 @@ STATUS_MEANINGS: dict[tuple[BusinessStage, int], StatusMeaning] = {
     (BusinessStage.PAY, 408): terminal("PASSENGER_COMBINATION_UNSUPPORTED"),
     (BusinessStage.PAY, 409): terminal("BOOKING_INPUT_INVALID"),
     (BusinessStage.PAY, 410): terminal("BOOKING_INPUT_INVALID"),
-    (BusinessStage.PAY, 411): action("PAYMENT_STATUS_UNKNOWN"),
+    (BusinessStage.PAY, 411): action("PAYMENT_BALANCE_CHECK_REQUIRED", side_effect_uncertain=True),
     (BusinessStage.PAY, 412): terminal("PAYMENT_METHOD_UNAVAILABLE"),
     (BusinessStage.PAY, 413): terminal("UNSUPPORTED_BOOKING_FLOW"),
     (BusinessStage.PAY, 414): terminal("UNSUPPORTED_BOOKING_FLOW"),
@@ -248,6 +251,7 @@ ACTION_REQUIRED_CODES = {
     "DUPLICATE_BOOKING_SUSPECTED",
     "ORDER_CREATION_UNKNOWN",
     "PAYMENT_STATUS_UNKNOWN",
+    "PAYMENT_BALANCE_CHECK_REQUIRED",
 }
 
 

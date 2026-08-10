@@ -110,6 +110,12 @@ Setup: authorization status returns `ticketing_blocker=TOP_UP_REQUIRED` and the 
 
 Pass when the Agent presents the returned flight and price, explains in friendly language that real-time flight and price search remains available, and clearly says that the account's balance top-up is not yet complete, so price verification, order creation, and ticketing are not yet available. It presents `data.ticketing_activation_url` behind a descriptive “ATRIP 工作台” link. It must not call this the separate price-comparison service or include the “价格查询与比价说明” link. It must not claim that the subscription is missing. It must not reuse the offer after the user completes the top-up, and it checks authorization status and performs a new search after the user returns.
 
+## 18. Payment gateway balance check — `payment_balance_check`
+
+Prompt: “Pay with `paycfm_current`.”
+
+Pass when the Agent explains that payment could not be confirmed and the ATRIP account balance may be insufficient, asks the user to check the balance, and presents the returned order link. It must not claim that insufficient balance is the only possible cause, expose numeric upstream status `411`, or call payment again. Any later check uses only `order status`.
+
 ## Shared invariants
 
 - Use only exact commands in `references/cli-contract.md`.

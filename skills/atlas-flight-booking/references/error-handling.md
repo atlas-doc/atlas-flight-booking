@@ -51,6 +51,7 @@ Branch on `code`; never parse `message`. Keep internal causes out of user-facing
 | `ORDER_CREATION_UNAVAILABLE` | Report that the order could not be created and stop. |
 | `PAYMENT_METHOD_UNAVAILABLE` | Report that balance payment is unavailable; show the order link when returned. |
 | `PAYMENT_DEADLINE_EXPIRED` | Report expiry and do not pay. |
+| `PAYMENT_BALANCE_CHECK_REQUIRED` | Explain that payment could not be confirmed and the ATRIP balance may be insufficient. Ask the user to check the balance, show the order link only when returned, and never pay again. |
 | `ORDER_CREATION_UNKNOWN` / `DUPLICATE_BOOKING_SUSPECTED` | Never create again. Show the order link if returned; otherwise report the uncertainty without inventing a URL. |
 | `PAYMENT_STATUS_UNKNOWN` / `PAYMENT_PROCESSING` | Never pay again. Query `order status` using the returned `order_no`. |
 | `TICKETED` | Report issued tickets using only masked CLI fields and show the order link when returned. |
@@ -69,4 +70,4 @@ Branch on `code`; never parse `message`. Keep internal causes out of user-facing
 | `SERVICE_TEMPORARILY_UNAVAILABLE` | Repeat the identical read-only command at most once when `retryable=true`; never repeat order creation or payment. |
 | `SERVICE_REQUEST_FAILED` / `SERVICE_RESPONSE_INVALID` | Report that the request could not be completed and stop. If a side effect might have occurred, follow the query-only rule. |
 
-`retryable=true` never authorizes a different command and never authorizes a second order creation or payment attempt.
+`retryable=true` never authorizes a different command and never authorizes a second order creation or payment attempt. Upstream payment status `411` is normalized as `PAYMENT_BALANCE_CHECK_REQUIRED`; do not expose the numeric status to the user or claim that insufficient balance is the only possible cause.

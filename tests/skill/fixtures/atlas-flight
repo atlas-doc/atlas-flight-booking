@@ -92,6 +92,9 @@ case "${scenario}:${command_line}" in
   payment_unknown:'order pay --confirmation-id paycfm_current --json')
     emit '{"schema_version":"1","status":"action_required","code":"PAYMENT_STATUS_UNKNOWN","message":"Payment status could not be confirmed","retryable":false,"data":{"order_no":"ATORDEREXAMPLE","order_url":"https://www.atriptech.com/#/order/detail/ATORDEREXAMPLE/en"},"details":{}}'
     ;;
+  payment_balance_check:'order pay --confirmation-id paycfm_current --json')
+    emit '{"schema_version":"1","status":"action_required","code":"PAYMENT_BALANCE_CHECK_REQUIRED","message":"Payment could not be confirmed; check the ATRIP balance because it may be insufficient","retryable":false,"data":{"order_no":"ATORDEREXAMPLE","order_url":"https://www.atriptech.com/#/order/detail/ATORDEREXAMPLE/en"},"details":{}}'
+    ;;
   payment_unknown:'order status --order-no ATORDEREXAMPLE --json'|ticketing_pending:'order status --order-no ATORDEREXAMPLE --json')
     emit '{"schema_version":"1","status":"success","code":"TICKETING_PENDING","message":"Ticketing is still pending","retryable":false,"data":{"order_no":"ATORDEREXAMPLE","order_url":"https://www.atriptech.com/#/order/detail/ATORDEREXAMPLE/en","airline_pnrs":[],"ticket_numbers":[]},"details":{}}'
     ;;

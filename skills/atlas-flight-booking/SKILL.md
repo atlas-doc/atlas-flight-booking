@@ -30,6 +30,8 @@ Follow `references/booking-workflow.md` for optional services, order creation, p
 
 Before payment, present the CLI's current payment summary and show `data.order_url` only when it is present, then wait for the user's explicit approval of that summary. Use the returned payment confirmation ID exactly once. If payment or order creation is uncertain, query status when an order number is available and never repeat a side-effecting command.
 
+On `PAYMENT_BALANCE_CHECK_REQUIRED`, explain that payment could not be confirmed and that the ATRIP account balance may be insufficient. Ask the user to check the balance, show `data.order_url` only when returned, and never submit payment again. Use only `order status` for any later status check.
+
 ## Mandatory checkpoints
 
 - 🛑 **AUTHORIZATION:** After presenting the authorization link and the existing-account/new-account instructions, stop the turn. Poll only after the user replies that authorization is complete.

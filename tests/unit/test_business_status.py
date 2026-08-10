@@ -83,7 +83,7 @@ EXPECTED: dict[tuple[BusinessStage, int], tuple[str, CommandStatus, bool]] = {
     (BusinessStage.PAY, 408): ("PASSENGER_COMBINATION_UNSUPPORTED", CommandStatus.TERMINAL_ERROR, False),
     (BusinessStage.PAY, 409): ("BOOKING_INPUT_INVALID", CommandStatus.TERMINAL_ERROR, False),
     (BusinessStage.PAY, 410): ("BOOKING_INPUT_INVALID", CommandStatus.TERMINAL_ERROR, False),
-    (BusinessStage.PAY, 411): ("PAYMENT_STATUS_UNKNOWN", CommandStatus.ACTION_REQUIRED, False),
+    (BusinessStage.PAY, 411): ("PAYMENT_BALANCE_CHECK_REQUIRED", CommandStatus.ACTION_REQUIRED, False),
     (BusinessStage.PAY, 412): ("PAYMENT_METHOD_UNAVAILABLE", CommandStatus.TERMINAL_ERROR, False),
     (BusinessStage.PAY, 413): ("UNSUPPORTED_BOOKING_FLOW", CommandStatus.TERMINAL_ERROR, False),
     (BusinessStage.PAY, 414): ("UNSUPPORTED_BOOKING_FLOW", CommandStatus.TERMINAL_ERROR, False),
@@ -116,6 +116,9 @@ EXPECTED_MESSAGES = {
     "PAYMENT_METHOD_UNAVAILABLE": "Balance payment is unavailable for this order",
     "PAYMENT_DEADLINE_EXPIRED": "Payment deadline expired",
     "PAYMENT_STATUS_UNKNOWN": "Payment status could not be confirmed",
+    "PAYMENT_BALANCE_CHECK_REQUIRED": (
+        "Payment could not be confirmed; check the ATRIP balance because it may be insufficient"
+    ),
     "PAYMENT_PROCESSING": "Payment is processing",
     "ORDER_NOT_FOUND": "Order could not be found",
     "ORDER_STATUS_UNAVAILABLE": "Order status is temporarily unavailable",
@@ -176,6 +179,13 @@ def test_unknown_side_effecting_statuses_require_confirmation(stage: BusinessSta
 @pytest.mark.parametrize("upstream_status", [318, 330])
 def test_known_uncertain_order_statuses_require_confirmation(upstream_status: int) -> None:
     meaning = map_business_status(BusinessStage.ORDER, upstream_status)
+
+    assert meaning is not None
+    assert meaning.side_effect_uncertain is True
+
+
+def test_payment_gateway_error_requires_query_only_recovery_and_balance_check() -> None:
+    meaning = map_business_status(BusinessStage.PAY, 411)
 
     assert meaning is not None
     assert meaning.side_effect_uncertain is True

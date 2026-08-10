@@ -51,6 +51,7 @@ Branch on the payment result:
 
 - `TICKETED`: report success, masked ticket details, and the order link when returned.
 - `TICKETING_PENDING`: explain that processing continues and show the order link when returned. The CLI has already polled for up to 120 seconds.
+- `PAYMENT_BALANCE_CHECK_REQUIRED`: explain that payment could not be confirmed and the ATRIP balance may be insufficient; ask the user to check it. Never pay again.
 - a stable terminal code: report the neutral meaning from `error-handling.md` and the order link when returned.
 - an unclear payment result: query `atlas-flight order status --order-no {order_no} --json` when `order_no` is returned. Never call `atlas-flight order pay` again.
 
@@ -58,4 +59,4 @@ For later checks, use only `order status`. Do not describe pending ticketing as 
 
 ## Side-effect uncertainty
 
-On `ORDER_CREATION_UNKNOWN`, do not create another order. Show the returned order link if available; otherwise report that the result could not be confirmed and do not invent a URL. On `PAYMENT_STATUS_UNKNOWN`, query only. Never retry order creation or payment even when `retryable=true` appears elsewhere.
+On `ORDER_CREATION_UNKNOWN`, do not create another order. Show the returned order link if available; otherwise report that the result could not be confirmed and do not invent a URL. On `PAYMENT_STATUS_UNKNOWN`, query only. On `PAYMENT_BALANCE_CHECK_REQUIRED`, tell the user the balance may be insufficient without claiming that this is the only cause. Never retry order creation or payment even when `retryable=true` appears elsewhere.
