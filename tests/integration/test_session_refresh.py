@@ -67,7 +67,7 @@ def test_auth_status_silently_refreshes_and_remains_authorized() -> None:
         if request.url.path == "/cli/session/refresh":
             return httpx.Response(
                 200,
-                json=envelope({"token": "new-jwt-value", "expireSecond": 36000}),
+                json=envelope(dict(token="new-jwt-value", expireSecond=36000)),
             )
         if request.headers["Token"] == "old-jwt-value":
             return httpx.Response(200, json=envelope(None, code=5555, success=False))

@@ -504,7 +504,7 @@ def test_refresh_session_posts_old_token_to_formal_control_route() -> None:
         return httpx.Response(
             200,
             json=envelope(
-                {"token": "new-jwt-value", "expireSecond": 36000},
+                dict(token="new-jwt-value", expireSecond=36000),
                 request_id="req-refresh",
             ),
         )
@@ -528,7 +528,7 @@ def test_protected_service_session_error_refreshes_saves_and_retries_once(servic
         if request.url.path == "/cli/session/refresh":
             return httpx.Response(
                 200,
-                json=envelope({"token": "new-jwt-value", "expireSecond": 36000}),
+                json=envelope(dict(token="new-jwt-value", expireSecond=36000)),
             )
         if request.headers["Token"] == "old-jwt-value":
             return httpx.Response(200, json=envelope(None, code=service_code, success=False))
@@ -573,7 +573,7 @@ def test_protected_http_session_error_refreshes_and_retries_once(http_status: in
         if request.url.path == "/cli/session/refresh":
             return httpx.Response(
                 200,
-                json=envelope({"token": "new-jwt-value", "expireSecond": 36000}),
+                json=envelope(dict(token="new-jwt-value", expireSecond=36000)),
             )
         if request.headers["Token"] == "old-jwt-value":
             return httpx.Response(http_status, json={"message": "raw session failure"})
@@ -664,7 +664,7 @@ def test_refreshed_request_session_error_does_not_refresh_twice() -> None:
         if request.url.path == "/cli/session/refresh":
             return httpx.Response(
                 200,
-                json=envelope({"token": "new-jwt-value", "expireSecond": 36000}),
+                json=envelope(dict(token="new-jwt-value", expireSecond=36000)),
             )
         return httpx.Response(200, json=envelope(None, code=5555, success=False))
 
@@ -726,7 +726,7 @@ def test_refresh_secure_store_failure_returns_stable_error_without_exposing_toke
         if request.url.path == "/cli/session/refresh":
             return httpx.Response(
                 200,
-                json=envelope({"token": "new-jwt-value", "expireSecond": 36000}),
+                json=envelope(dict(token="new-jwt-value", expireSecond=36000)),
             )
         return httpx.Response(200, json=envelope(None, code=5555, success=False))
 
