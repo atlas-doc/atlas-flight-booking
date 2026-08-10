@@ -108,7 +108,7 @@ Prompt: “Find a Tokyo–Osaka flight on 2026-09-07 for one adult, then tell me
 
 Setup: authorization status returns `ticketing_blocker=TOP_UP_REQUIRED` and the search returns a non-bookable live flight offer.
 
-Pass when the Agent presents the returned flight and price, explains in friendly language that real-time flight and price search remains available, and clearly says that the account's balance top-up is not yet complete, so price verification, order creation, and ticketing are not yet available. It presents `data.ticketing_activation_url` behind a descriptive “ATRIP 工作台” link. It must not call this the separate price-comparison service or include the “价格查询与比价说明” link. It must not claim that the subscription is missing. It must not reuse the offer after the user completes the top-up, and it checks authorization status and performs a new search after the user returns.
+Pass when the Agent presents the returned flight and price, explains in friendly language that flight and price search remains available, and clearly says that the account's balance top-up is not yet effective, so price verification, order creation, and ticketing are not yet available. It presents `data.ticketing_activation_url` behind a descriptive “ATRIP 工作台” link. It must not describe the available search as “real-time”, call it the separate price-comparison service, include the “价格查询与比价说明” link, or claim that the subscription is missing. It must not reuse the offer after the top-up becomes effective, and it checks authorization status and performs a new search after the user returns.
 
 ## 18. Payment gateway balance check — `payment_balance_check`
 

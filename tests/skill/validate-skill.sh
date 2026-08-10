@@ -143,8 +143,10 @@ check_structure_and_contracts() {
     '`data.ticketing_activation_url`' \
     '`data.ticketing_blocker`' \
     '`TOP_UP_REQUIRED`' \
-    'continue searching real-time flights and prices' \
+    'continue searching flights and prices' \
     'balance top-up is not yet complete' \
+    '当前账户可以继续查询航班和价格，但充值状态尚未生效' \
+    '查看充值状态；状态更新后，我会重新检查并搜索可预订报价' \
     'price verification, order creation, and ticketing are not yet available' \
     'Do not describe these results as the separate price-comparison service' \
     'Do not expose internal product labels' \
@@ -167,10 +169,11 @@ check_structure_and_contracts() {
     'not yet enabled for ticketing' \
     'ATRIP 工作台' \
     'unfinished activation steps' \
-    'real-time flight and price search remains available' \
-    "balance top-up is not yet complete" \
-    'must not call this the separate price-comparison service' \
-    'must not claim that the subscription is missing' \
+    'flight and price search remains available' \
+    "balance top-up is not yet effective" \
+    'must not describe the available search as “real-time”' \
+    'call it the separate price-comparison service' \
+    'claim that the subscription is missing' \
     'Price decreased' \
     'Price increased' \
     'asks only for `passengers[0].document.number`' \
