@@ -44,7 +44,7 @@ Skill 负责对话流程和用户确认；`atlas-flight` CLI 负责授权、安�
 npx --yes skills add https://github.com/atlas-doc/atlas-flight-booking --skill atlas-flight-booking
 ```
 
-Skill 启动后会检查 CLI。如果没有安装，Agent 会在需要时通过 Astral 官方独立安装器自动安装 `uv`，然后执行 `uv tool install --python 3.12 atlas-flight-booking==0.3.8`，从 [PyPI](https://pypi.org/project/atlas-flight-booking/) 安装已发布的 Atlas CLI。用户不需要单独安装这两个工具；只有自动安装实际失败时，Agent 才会停止并提供简短的恢复说明。
+Skill 启动后会检查 CLI。如果没有安装，Agent 会在需要时通过 Astral 官方独立安装器自动安装 `uv`，然后执行 `uv tool install --python 3.12 atlas-flight-booking==0.3.9`，从 [PyPI](https://pypi.org/project/atlas-flight-booking/) 安装已发布的 Atlas CLI。用户不需要单独安装这两个工具；只有自动安装实际失败时，Agent 才会停止并提供简短的恢复说明。
 
 [安装详情与故障排查 →](docs/installation.zh-CN.md)
 

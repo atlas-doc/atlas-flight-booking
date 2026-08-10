@@ -285,6 +285,31 @@ def test_completed_exchange_checks_access_and_returns_capabilities() -> None:
     }
 
 
+def test_completed_exchange_returns_ticketing_activation_url_when_unavailable() -> None:
+    api = PollApi(
+        [completed_status()],
+        access_outcomes=[
+            AccessInfo(
+                activation_status=3,
+                top_up_completed=False,
+                access_info_exists=True,
+                request_id="req-access",
+            )
+        ],
+    )
+    secrets = PollSecrets(pending_auth())
+
+    result = make_service(api, secrets, FakeClock()).poll(timeout_seconds=120)
+
+    assert result.code == "AUTHORIZED"
+    assert result.data == {
+        "authenticated": True,
+        "search_available": True,
+        "ticketing_available": False,
+        "ticketing_activation_url": "https://www.atriptech.com/#/workspace",
+    }
+
+
 def test_retryable_api_error_retains_pending_record() -> None:
     error = ApiClientError(
         code="SERVICE_TEMPORARILY_UNAVAILABLE",
@@ -379,6 +404,31 @@ def test_completed_authorization_synchronizes_api_credentials_before_clearing_pe
         "ticketing_available": True,
     }
     assert "jwt" not in result.model_dump_json().lower()
+
+
+def test_synchronized_authorization_returns_ticketing_activation_url_when_unavailable() -> None:
+    api = PollApi([completed_status()])
+    secrets = PollSecrets(pending_auth())
+    synchronizer = FakeSynchronizer(
+        secrets.events,
+        AccessSnapshot(
+            activation_status=1,
+            top_up_completed=False,
+            search_available=True,
+            ticketing_available=False,
+            request_id="req-sync",
+        ),
+    )
+
+    result = make_service(api, secrets, FakeClock(), synchronizer).poll(timeout_seconds=120)
+
+    assert result.code == "AUTHORIZED"
+    assert result.data == {
+        "authenticated": True,
+        "search_available": True,
+        "ticketing_available": False,
+        "ticketing_activation_url": "https://www.atriptech.com/#/workspace",
+    }
 
 
 def test_synchronization_failure_keeps_pending_and_saved_jwt_for_safe_retry() -> None:

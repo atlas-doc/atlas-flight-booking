@@ -82,6 +82,7 @@ def test_status_with_access_maps_capabilities() -> None:
         "authenticated": True,
         "search_available": True,
         "ticketing_available": False,
+        "ticketing_activation_url": "https://www.atriptech.com/#/workspace",
     }
     assert result.request_id == "req-access"
     assert api.jwt_calls == ["jwt-value"]
@@ -94,7 +95,10 @@ def test_access_info_exists_does_not_gate_live_topped_up_ticketing() -> None:
         AccessInfo(activation_status=3, top_up_completed=True, access_info_exists=False),
     )
 
-    assert service.status().data["ticketing_available"] is True
+    result = service.status()
+
+    assert result.data["ticketing_available"] is True
+    assert "ticketing_activation_url" not in result.data
 
 
 def test_sandbox_status_reports_transaction_capability_without_exposing_mode() -> None:

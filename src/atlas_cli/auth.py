@@ -67,15 +67,36 @@ def result_from_api_error(error: ApiClientError) -> CommandResult:
     return terminal_error_result(error.code, error.message, request_id=error.request_id)
 
 
-def capability_data(access: AccessInfo, *, mode: CustomerMode = CustomerMode.PROD) -> dict[str, object]:
-    return {
+def capability_payload(
+    *,
+    search_available: bool,
+    ticketing_is_available: bool,
+    ticketing_activation_url: str,
+) -> dict[str, object]:
+    data: dict[str, object] = {
         "authenticated": True,
-        "search_available": True,
-        "ticketing_available": (
+        "search_available": search_available,
+        "ticketing_available": ticketing_is_available,
+    }
+    if not ticketing_is_available:
+        data["ticketing_activation_url"] = ticketing_activation_url
+    return data
+
+
+def capability_data(
+    access: AccessInfo,
+    *,
+    mode: CustomerMode = CustomerMode.PROD,
+    ticketing_activation_url: str,
+) -> dict[str, object]:
+    return capability_payload(
+        search_available=True,
+        ticketing_is_available=(
             mode is CustomerMode.SANDBOX
             or ticketing_available(access.activation_status, access.top_up_completed)
         ),
-    }
+        ticketing_activation_url=ticketing_activation_url,
+    )
 
 
 class AuthService:
@@ -148,7 +169,11 @@ class AuthService:
             "AUTHORIZED",
             "Authorization active",
             request_id=access.request_id,
-            data=capability_data(access, mode=self._customer_mode),
+            data=capability_data(
+                access,
+                mode=self._customer_mode,
+                ticketing_activation_url=self._settings.subscription_page_url,
+            ),
         )
 
     def refresh_session(self) -> CommandResult:
@@ -250,11 +275,11 @@ class AuthService:
                     "AUTHORIZED",
                     "Authorization active",
                     request_id=snapshot.request_id,
-                    data={
-                        "authenticated": True,
-                        "search_available": snapshot.search_available,
-                        "ticketing_available": snapshot.ticketing_available,
-                    },
+                    data=capability_payload(
+                        search_available=snapshot.search_available,
+                        ticketing_is_available=snapshot.ticketing_available,
+                        ticketing_activation_url=self._settings.subscription_page_url,
+                    ),
                 )
             self._secrets.clear_pending_auth()
         except SecureStoreError:
@@ -293,7 +318,11 @@ class AuthService:
             "AUTHORIZED",
             "Authorization active",
             request_id=access.request_id,
-            data=capability_data(access, mode=self._customer_mode),
+            data=capability_data(
+                access,
+                mode=self._customer_mode,
+                ticketing_activation_url=self._settings.subscription_page_url,
+            ),
         )
 
     def _remaining_token_lifetime(self, pending: PendingAuth) -> float:

@@ -25,7 +25,7 @@ The Agent installs `uv` when it is absent. `uv` then downloads and manages Pytho
 This is an advanced recovery path for support and development. Use it only when the Agent-managed installation cannot complete.
 
 ```bash
-uv tool install --python 3.12 atlas-flight-booking==0.3.8
+uv tool install --python 3.12 atlas-flight-booking==0.3.9
 ```
 
 Verify the installation:
@@ -35,7 +35,7 @@ atlas-flight --version
 atlas-flight doctor --json
 ```
 
-The version command should report `atlas-flight 0.3.8`.
+The version command should report `atlas-flight 0.3.9`.
 
 ## Command not found after installation
 
@@ -56,7 +56,7 @@ Close and reopen the terminal before verifying `atlas-flight --version` again.
 ## Reinstall or repair
 
 ```bash
-uv tool install --force --python 3.12 atlas-flight-booking==0.3.8
+uv tool install --force --python 3.12 atlas-flight-booking==0.3.9
 ```
 
 Reinstalling the CLI does not remove Atlas authorization stored in the operating system's secure credential facility.

@@ -44,7 +44,7 @@ Optional baggage or seat unavailability does not block the main booking flow. Th
 npx --yes skills add https://github.com/atlas-doc/atlas-flight-booking --skill atlas-flight-booking
 ```
 
-The Skill checks for the CLI when it starts. If the CLI is missing, the Agent automatically installs `uv` from Astral's official standalone installer when needed, then installs the signed Atlas CLI release from [PyPI](https://pypi.org/project/atlas-flight-booking/) with `uv tool install --python 3.12 atlas-flight-booking==0.3.8`. Users do not need to install either tool separately. The Agent only stops when automatic installation actually fails.
+The Skill checks for the CLI when it starts. If the CLI is missing, the Agent automatically installs `uv` from Astral's official standalone installer when needed, then installs the signed Atlas CLI release from [PyPI](https://pypi.org/project/atlas-flight-booking/) with `uv tool install --python 3.12 atlas-flight-booking==0.3.9`. Users do not need to install either tool separately. The Agent only stops when automatic installation actually fails.
 
 [Installation details and troubleshooting →](docs/installation.md)
 

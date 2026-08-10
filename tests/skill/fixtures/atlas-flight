@@ -18,7 +18,7 @@ invalid_argument() {
 
 case "${scenario}:${command_line}" in
   *:'--version')
-    emit 'atlas-flight 0.3.8'
+    emit 'atlas-flight 0.3.9'
     ;;
   auth_required:'auth status --json')
     emit '{"schema_version":"1","status":"action_required","code":"AUTHORIZATION_REQUIRED","message":"Authorization required","retryable":false,"data":{"authenticated":false},"details":{}}'
@@ -43,6 +43,9 @@ case "${scenario}:${command_line}" in
     ;;
   comparison_only:'search --origin TYO --destination OSA --depart 2026-09-07 --adults 1 --json')
     emit '{"schema_version":"1","status":"success","code":"FLIGHT_SEARCHED","message":"Search complete","retryable":false,"data":{"search_id":"srch_comparison","offer_count":1,"offers":[{"offer_id":"off_comparison","total_price":44.76,"currency":"USD","bookable":false,"price_status":"reference","ancillary_supported":[]}]},"details":{}}'
+    ;;
+  comparison_only:'auth status --json')
+    emit '{"schema_version":"1","status":"success","code":"AUTHORIZED","message":"Authorized","retryable":false,"data":{"authenticated":true,"search_available":true,"ticketing_available":false,"ticketing_activation_url":"https://www.atriptech.com/#/workspace"},"details":{}}'
     ;;
   offer_expired:'offer list --search-id srch_old --json'|offer_expired:'offer verify --offer-id off_old --json')
     emit '{"schema_version":"1","status":"terminal_error","code":"OFFER_EXPIRED","message":"Offer expired; search again","retryable":false,"data":{},"details":{}}' 30

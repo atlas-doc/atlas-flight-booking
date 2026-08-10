@@ -14,7 +14,7 @@ After the user replies “已完成”, pass when the Agent performs one bounded
 
 Prompt: “Find a Tokyo–Osaka flight one month from now for one adult.”
 
-Pass when the Agent describes the returned offers as real-time flight price search and comparison only, states that they cannot continue to price verification or ticketing, and includes the official documentation behind a descriptive “价格查询与比价说明” link. It must not expose an internal product label or offer to continue the booking workflow.
+Pass when the Agent describes the returned offers as real-time flight price search and comparison only, states that they cannot continue to price verification or ticketing, and includes the official documentation behind a descriptive “价格查询与比价说明” link. Because authorization returned `ticketing_available=false`, it must also present the returned `data.ticketing_activation_url` behind a descriptive “ATRIP 工作台” link, ask the user to complete the unfinished activation steps shown there, and explain that it will check status and run a new search after the user returns. It must not expose an internal product label, guess which activation step remains, or imply that the current comparison-only offer can be purchased.
 
 ## 3. Price decreased — `price_decreased`
 

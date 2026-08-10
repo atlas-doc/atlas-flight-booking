@@ -25,6 +25,8 @@ On `AUTHORIZATION_REQUIRED`:
    Ask the user to reply after completing authorization, remind them to return to the conversation, state that the interrupted task will then continue, and stop the current turn without polling.
 3. After the user confirms completion, run the bounded poll once. Resume the interrupted task only after `AUTHORIZED`. On `AUTH_PENDING`, explain that authorization is still incomplete and wait for the user; do not start an automatic polling loop.
 
+On `AUTHORIZED`, retain `data.ticketing_available` and the optional `data.ticketing_activation_url` for the current conversation. Show that URL only when it was returned and ticketing is unavailable. If the user completes the steps shown there, check authorization status again and run a new search; never continue a comparison-only offer obtained before activation.
+
 ## Search and verify
 
 | Operation | Exact command |
