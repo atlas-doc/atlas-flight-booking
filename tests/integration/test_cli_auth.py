@@ -83,8 +83,8 @@ def test_auth_poll_invalid_timeout_is_json_and_exit_two(monkeypatch) -> None:
 
 def test_real_cli_builder_routes_api_warnings_to_file_not_json_stderr(monkeypatch, tmp_path) -> None:
     class UnavailableApi:
-        def __init__(self, settings) -> None:
-            pass
+        def __init__(self, settings, *, credential_store=None) -> None:
+            del settings, credential_store
 
         def create_auth_token(self, *, cli_version: str, device_name: str):
             raise ApiClientError(

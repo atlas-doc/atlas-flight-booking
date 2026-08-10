@@ -38,6 +38,12 @@ class ExchangedCredentials(ApiModel):
     request_id: str | None = None
 
 
+class RefreshedSession(ApiModel):
+    token: str = Field(min_length=1, repr=False)
+    expire_seconds: int = Field(alias="expireSecond", gt=0)
+    request_id: str | None = None
+
+
 class ClientStatus(ApiModel):
     activation_status: int = Field(alias="activationStatus")
 

@@ -25,7 +25,7 @@ When the Skill first needs Atlas Flight Booking, it checks for `atlas-flight`. I
 This is an advanced recovery path for support and development. Use it only when the Agent-managed installation cannot complete.
 
 ```bash
-uv tool install --python 3.12 git+https://github.com/atlas-doc/atlas-flight-booking.git@v0.3.6
+uv tool install --python 3.12 git+https://github.com/atlas-doc/atlas-flight-booking.git@v0.3.7
 ```
 
 Verify the installation:
@@ -35,7 +35,7 @@ atlas-flight --version
 atlas-flight doctor --json
 ```
 
-The version command should report `atlas-flight 0.3.6`.
+The version command should report `atlas-flight 0.3.7`.
 
 ## Command not found after installation
 
@@ -56,7 +56,7 @@ Close and reopen the terminal before verifying `atlas-flight --version` again.
 ## Reinstall or repair
 
 ```bash
-uv tool install --force --python 3.12 git+https://github.com/atlas-doc/atlas-flight-booking.git@v0.3.6
+uv tool install --force --python 3.12 git+https://github.com/atlas-doc/atlas-flight-booking.git@v0.3.7
 ```
 
 Reinstalling the CLI does not remove Atlas authorization stored in the operating system's secure credential facility.

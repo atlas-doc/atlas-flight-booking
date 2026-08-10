@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 from collections.abc import Mapping
-from typing import NoReturn
+from typing import NoReturn, Protocol
 from urllib.parse import quote
 
 import httpx
@@ -22,13 +23,22 @@ from atlas_cli.api_models import (
     FareSearchUsage,
     PreProductionAccessInfos,
     ProductionAccessInfos,
+    RefreshedSession,
     ServerVersion,
 )
 from atlas_cli.config import InternalSettings
+from atlas_cli.secure_store import Credentials, SecureStoreError
 
 logger = logging.getLogger(__name__)
 access_credential_records_adapter = TypeAdapter(list[AccessCredentialRecord])
-PROTECTED_AUTHORIZATION_REQUIRED_CODES = frozenset({5107, 5555})
+PROTECTED_SESSION_REFRESH_CODES = frozenset({5107, 5555})
+PROTECTED_SESSION_REFRESH_HTTP_STATUSES = frozenset({401, 461})
+
+
+class SessionCredentialStore(Protocol):
+    def load_credentials(self) -> Credentials | None: ...
+
+    def save_credentials(self, credentials: Credentials) -> None: ...
 
 
 class ApiClientError(RuntimeError):
@@ -53,6 +63,7 @@ class AtlasApiClient:
         settings: InternalSettings,
         client: httpx.Client | None = None,
         async_client: httpx.AsyncClient | None = None,
+        credential_store: SessionCredentialStore | None = None,
     ) -> None:
         self._settings = settings
         self._owns_client = client is None
@@ -64,6 +75,7 @@ class AtlasApiClient:
         )
         self._client = client or httpx.Client(timeout=self._default_timeout)
         self._async_client = async_client
+        self._credential_store = credential_store
 
     def get_server_version(self) -> ServerVersion:
         envelope, _ = self._request("GET", "/cli/version")
@@ -108,6 +120,28 @@ class AtlasApiClient:
         )
         try:
             parsed = ExchangedCredentials.model_validate(envelope.data)
+        except ValidationError:
+            self._raise_invalid_response(envelope.uuid)
+        return parsed.model_copy(update={"request_id": envelope.uuid})
+
+    def refresh_session(
+        self,
+        jwt: str,
+        *,
+        timeout_seconds: float | None = None,
+        _deadline: float | None = None,
+    ) -> RefreshedSession:
+        envelope, _ = self._request(
+            "POST",
+            "/cli/session/refresh",
+            headers={"Token": jwt},
+            timeout_seconds=timeout_seconds,
+            protected=True,
+            _allow_refresh=False,
+            _deadline=_deadline,
+        )
+        try:
+            parsed = RefreshedSession.model_validate(envelope.data)
         except ValidationError:
             self._raise_invalid_response(envelope.uuid)
         return parsed.model_copy(update={"request_id": envelope.uuid})
@@ -193,6 +227,8 @@ class AtlasApiClient:
         headers: Mapping[str, str] | None = None,
         timeout_seconds: float | None = None,
         protected: bool = False,
+        _allow_refresh: bool = True,
+        _deadline: float | None = None,
     ) -> tuple[ControlEnvelope[object], httpx.Response]:
         if timeout_seconds is not None and timeout_seconds <= 0:
             self._raise_public_error(
@@ -200,18 +236,31 @@ class AtlasApiClient:
                 message="Service temporarily unavailable",
                 retryable=True,
             )
+        deadline = _deadline
+        request_timeout = timeout_seconds
+        if deadline is None and timeout_seconds is not None:
+            deadline = time.monotonic() + timeout_seconds
+        elif deadline is not None:
+            request_timeout = deadline - time.monotonic()
+            if request_timeout <= 0:
+                self._raise_public_error(
+                    code="SERVICE_TEMPORARILY_UNAVAILABLE",
+                    message="Service temporarily unavailable",
+                    retryable=True,
+                )
+        request_headers = self._current_session_headers(headers) if protected and _allow_refresh else headers
         try:
             url = f"{self._settings.control_api_base_url.rstrip('/')}{path}"
-            if timeout_seconds is None:
-                response = self._client.request(method, url, json=json, headers=headers)
+            if request_timeout is None:
+                response = self._client.request(method, url, json=json, headers=request_headers)
             else:
                 response = asyncio.run(
                     self._request_with_total_timeout(
                         method,
                         url,
                         json=json,
-                        headers=headers,
-                        timeout_seconds=timeout_seconds,
+                        headers=request_headers,
+                        timeout_seconds=request_timeout,
                     )
                 )
         except (TimeoutError, httpx.RequestError):
@@ -221,7 +270,16 @@ class AtlasApiClient:
                 retryable=True,
             )
 
-        if protected and response.status_code == 401:
+        if protected and response.status_code in PROTECTED_SESSION_REFRESH_HTTP_STATUSES:
+            if _allow_refresh:
+                return self._refresh_and_retry(
+                    method,
+                    path,
+                    json=json,
+                    headers=request_headers,
+                    deadline=deadline,
+                    request_id=None,
+                )
             self._raise_public_error(
                 code="AUTHORIZATION_REQUIRED",
                 message="Authorization required",
@@ -246,9 +304,135 @@ class AtlasApiClient:
         except (ValueError, ValidationError):
             self._raise_invalid_response(None)
 
+        if (
+            protected
+            and envelope.code in PROTECTED_SESSION_REFRESH_CODES
+            and (not envelope.success or envelope.code != 200)
+            and _allow_refresh
+        ):
+            return self._refresh_and_retry(
+                method,
+                path,
+                json=json,
+                headers=request_headers,
+                deadline=deadline,
+                request_id=envelope.uuid,
+            )
         if not envelope.success or envelope.code != 200:
             self._raise_service_error(envelope.code, envelope.uuid, protected=protected)
         return envelope, response
+
+    def _current_session_headers(
+        self,
+        headers: Mapping[str, str] | None,
+    ) -> Mapping[str, str] | None:
+        supplied_token = headers.get("Token") if headers is not None else None
+        if not isinstance(supplied_token, str) or not supplied_token or self._credential_store is None:
+            return headers
+        current = self._load_credentials()
+        if current is None or current.jwt == supplied_token:
+            return headers
+        assert headers is not None
+        updated_headers = dict(headers)
+        updated_headers["Token"] = current.jwt
+        return updated_headers
+
+    def _refresh_and_retry(
+        self,
+        method: str,
+        path: str,
+        *,
+        json: Mapping[str, object] | None,
+        headers: Mapping[str, str] | None,
+        deadline: float | None,
+        request_id: str | None,
+    ) -> tuple[ControlEnvelope[object], httpx.Response]:
+        failed_token = headers.get("Token") if headers is not None else None
+        if not isinstance(failed_token, str) or not failed_token or self._credential_store is None:
+            self._raise_authorization_required(request_id)
+
+        current = self._load_credentials()
+        if current is None:
+            self._raise_authorization_required(request_id)
+        if current.jwt != failed_token:
+            return self._retry_with_token(
+                method,
+                path,
+                token=current.jwt,
+                json=json,
+                headers=headers,
+                deadline=deadline,
+            )
+
+        try:
+            refreshed = self.refresh_session(failed_token, _deadline=deadline)
+        except ApiClientError as error:
+            if error.code == "AUTHORIZATION_REQUIRED":
+                concurrent = self._load_credentials()
+                if concurrent is not None and concurrent.jwt != failed_token:
+                    return self._retry_with_token(
+                        method,
+                        path,
+                        token=concurrent.jwt,
+                        json=json,
+                        headers=headers,
+                        deadline=deadline,
+                    )
+            raise
+
+        concurrent = self._load_credentials()
+        if concurrent is not None and concurrent.jwt != failed_token:
+            retry_token = concurrent.jwt
+        else:
+            updated = current.model_copy(update={"jwt": refreshed.token})
+            self._save_credentials(updated)
+            retry_token = refreshed.token
+        return self._retry_with_token(
+            method,
+            path,
+            token=retry_token,
+            json=json,
+            headers=headers,
+            deadline=deadline,
+        )
+
+    def _retry_with_token(
+        self,
+        method: str,
+        path: str,
+        *,
+        token: str,
+        json: Mapping[str, object] | None,
+        headers: Mapping[str, str] | None,
+        deadline: float | None,
+    ) -> tuple[ControlEnvelope[object], httpx.Response]:
+        retried_headers = dict(headers or {})
+        retried_headers["Token"] = token
+        return self._request(
+            method,
+            path,
+            json=json,
+            headers=retried_headers,
+            protected=True,
+            _allow_refresh=False,
+            _deadline=deadline,
+        )
+
+    def _load_credentials(self) -> Credentials | None:
+        if self._credential_store is None:
+            return None
+        try:
+            return self._credential_store.load_credentials()
+        except SecureStoreError:
+            self._raise_secure_store_unavailable()
+
+    def _save_credentials(self, credentials: Credentials) -> None:
+        if self._credential_store is None:
+            self._raise_authorization_required(None)
+        try:
+            self._credential_store.save_credentials(credentials)
+        except SecureStoreError:
+            self._raise_secure_store_unavailable()
 
     async def _request_with_total_timeout(
         self,
@@ -294,13 +478,15 @@ class AtlasApiClient:
         *,
         protected: bool,
     ) -> NoReturn:
-        if protected and service_code in PROTECTED_AUTHORIZATION_REQUIRED_CODES:
+        if protected and service_code in PROTECTED_SESSION_REFRESH_CODES:
             self._raise_public_error(
                 code="AUTHORIZATION_REQUIRED",
                 message="Authorization required",
                 retryable=False,
                 request_id=request_id,
             )
+        if service_code == 5120:
+            self._raise_authorization_required(request_id)
         if service_code == 5119:
             self._raise_public_error(
                 code="AUTH_EXPIRED",
@@ -321,6 +507,21 @@ class AtlasApiClient:
             message="Service returned an invalid response",
             retryable=False,
             request_id=request_id,
+        )
+
+    def _raise_authorization_required(self, request_id: str | None) -> NoReturn:
+        self._raise_public_error(
+            code="AUTHORIZATION_REQUIRED",
+            message="Authorization required",
+            retryable=False,
+            request_id=request_id,
+        )
+
+    def _raise_secure_store_unavailable(self) -> NoReturn:
+        self._raise_public_error(
+            code="SECURE_STORE_UNAVAILABLE",
+            message="Secure credential storage is unavailable",
+            retryable=False,
         )
 
     @staticmethod

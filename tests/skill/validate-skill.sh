@@ -202,7 +202,7 @@ check_fixture() {
     auth_service_unavailable price_decreased price_increased baggage_unavailable seat_unavailable \
     passenger_required contact_invalid order_ready order_without_link payment_unknown ticketing_pending ticketed subscription_required; do
     version="$(PATH="$PWD/tests/skill/fixtures:$PATH" ATLAS_TEST_SCENARIO="$scenario" atlas-flight --version)"
-    test "$version" = 'atlas-flight 0.3.6' || fail "inconsistent plain-text version for $scenario: $version"
+    test "$version" = 'atlas-flight 0.3.7' || fail "inconsistent plain-text version for $scenario: $version"
   done
 
   fixture_json auth_required AUTHORIZATION_REQUIRED auth status --json

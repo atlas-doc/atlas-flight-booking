@@ -9,11 +9,29 @@ import pytest
 
 from atlas_cli.api_client import ApiClientError, AtlasApiClient
 from atlas_cli.config import InternalSettings
+from atlas_cli.secure_store import Credentials, SecureStoreError
 
 Handler = Callable[[httpx.Request], httpx.Response]
 
 
-def client_with_handler(handler: Handler) -> AtlasApiClient:
+class MemoryCredentialStore:
+    def __init__(self, credentials: Credentials | None) -> None:
+        self.credentials = credentials
+        self.saved: list[Credentials] = []
+
+    def load_credentials(self) -> Credentials | None:
+        return self.credentials
+
+    def save_credentials(self, credentials: Credentials) -> None:
+        self.credentials = credentials
+        self.saved.append(credentials)
+
+
+def client_with_handler(
+    handler: Handler,
+    *,
+    credential_store: MemoryCredentialStore | None = None,
+) -> AtlasApiClient:
     settings = InternalSettings(
         control_api_base_url="https://control.example.invalid",
         authorization_page_url="https://web.example.invalid/login",
@@ -21,7 +39,12 @@ def client_with_handler(handler: Handler) -> AtlasApiClient:
     transport = httpx.MockTransport(handler)
     client = httpx.Client(transport=transport)
     async_client = httpx.AsyncClient(transport=transport)
-    return AtlasApiClient(settings, client=client, async_client=async_client)
+    return AtlasApiClient(
+        settings,
+        client=client,
+        async_client=async_client,
+        credential_store=credential_store,
+    )
 
 
 def envelope(data: object, *, request_id: str = "req-1", code: int = 200, success: bool = True) -> dict[str, object]:
@@ -471,6 +494,208 @@ def test_protected_http_401_requires_authorization() -> None:
     assert caught.value.code == "AUTHORIZATION_REQUIRED"
     assert caught.value.retryable is False
     assert "raw unauthorized" not in str(caught.value)
+
+
+def test_refresh_session_posts_old_token_to_formal_control_route() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.method == "POST"
+        assert request.url.path == "/cli/session/refresh"
+        assert request.headers["Token"] == "old-jwt-value"
+        return httpx.Response(
+            200,
+            json=envelope(
+                {"token": "new-jwt-value", "expireSecond": 36000},
+                request_id="req-refresh",
+            ),
+        )
+
+    result = client_with_handler(handler).refresh_session("old-jwt-value")
+
+    assert result.token == "new-jwt-value"
+    assert result.expire_seconds == 36000
+    assert result.request_id == "req-refresh"
+
+
+@pytest.mark.parametrize("service_code", [5107, 5555])
+def test_protected_service_session_error_refreshes_saves_and_retries_once(service_code: int) -> None:
+    calls: list[tuple[str, str, str]] = []
+    store = MemoryCredentialStore(
+        Credentials(jwt="old-jwt-value", client_code="CLIENT", cid="CUSTOMER")
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append((request.method, request.url.path, request.headers.get("Token", "")))
+        if request.url.path == "/cli/session/refresh":
+            return httpx.Response(
+                200,
+                json=envelope({"token": "new-jwt-value", "expireSecond": 36000}),
+            )
+        if request.headers["Token"] == "old-jwt-value":
+            return httpx.Response(200, json=envelope(None, code=service_code, success=False))
+        return httpx.Response(
+            200,
+            json=envelope(
+                {
+                    "clientStatus": {"activationStatus": 3},
+                    "topUp": {"completed": True},
+                    "accessInfo": {"exists": True},
+                },
+                request_id="req-retried",
+            ),
+        )
+
+    result = client_with_handler(handler, credential_store=store).check_access_info("old-jwt-value")
+
+    assert result.request_id == "req-retried"
+    assert calls == [
+        ("GET", "/cli/agent/access-info/check", "old-jwt-value"),
+        ("POST", "/cli/session/refresh", "old-jwt-value"),
+        ("GET", "/cli/agent/access-info/check", "new-jwt-value"),
+    ]
+    assert store.credentials == Credentials(
+        jwt="new-jwt-value",
+        client_code="CLIENT",
+        cid="CUSTOMER",
+    )
+    assert store.saved == [store.credentials]
+
+
+@pytest.mark.parametrize("http_status", [401, 461])
+def test_protected_http_session_error_refreshes_and_retries_once(http_status: int) -> None:
+    calls = 0
+    store = MemoryCredentialStore(
+        Credentials(jwt="old-jwt-value", client_code="CLIENT", cid="CUSTOMER")
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        if request.url.path == "/cli/session/refresh":
+            return httpx.Response(
+                200,
+                json=envelope({"token": "new-jwt-value", "expireSecond": 36000}),
+            )
+        if request.headers["Token"] == "old-jwt-value":
+            return httpx.Response(http_status, json={"message": "raw session failure"})
+        return httpx.Response(200, json=envelope({"dailyLimit": 1000, "usedToday": 12}))
+
+    result = client_with_handler(handler, credential_store=store).get_fare_search_usage(
+        "old-jwt-value"
+    )
+
+    assert result.used_today == 12
+    assert calls == 3
+    assert store.credentials is not None
+    assert store.credentials.jwt == "new-jwt-value"
+
+
+def test_refresh_code_5120_requires_reauthorization_without_overwriting_credentials() -> None:
+    calls: list[str] = []
+    original = Credentials(jwt="wrong-jwt-value", client_code="CLIENT", cid="CUSTOMER")
+    store = MemoryCredentialStore(original)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request.url.path)
+        if request.url.path == "/cli/session/refresh":
+            return httpx.Response(
+                200,
+                json=envelope(None, request_id="req-reauthorize", code=5120, success=False),
+            )
+        return httpx.Response(200, json=envelope(None, code=5555, success=False))
+
+    with pytest.raises(ApiClientError) as caught:
+        client_with_handler(handler, credential_store=store).check_access_info("wrong-jwt-value")
+
+    assert caught.value.code == "AUTHORIZATION_REQUIRED"
+    assert caught.value.request_id == "req-reauthorize"
+    assert calls == ["/cli/agent/access-info/check", "/cli/session/refresh"]
+    assert store.credentials == original
+    assert store.saved == []
+
+
+def test_refreshed_request_session_error_does_not_refresh_twice() -> None:
+    calls: list[str] = []
+    store = MemoryCredentialStore(
+        Credentials(jwt="old-jwt-value", client_code="CLIENT", cid="CUSTOMER")
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request.url.path)
+        if request.url.path == "/cli/session/refresh":
+            return httpx.Response(
+                200,
+                json=envelope({"token": "new-jwt-value", "expireSecond": 36000}),
+            )
+        return httpx.Response(200, json=envelope(None, code=5555, success=False))
+
+    with pytest.raises(ApiClientError) as caught:
+        client_with_handler(handler, credential_store=store).check_access_info("old-jwt-value")
+
+    assert caught.value.code == "AUTHORIZATION_REQUIRED"
+    assert calls == [
+        "/cli/agent/access-info/check",
+        "/cli/session/refresh",
+        "/cli/agent/access-info/check",
+    ]
+
+
+def test_invalid_refresh_response_does_not_overwrite_credentials() -> None:
+    original = Credentials(jwt="old-jwt-value", client_code="CLIENT", cid="CUSTOMER")
+    store = MemoryCredentialStore(original)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/cli/session/refresh":
+            return httpx.Response(200, json=envelope({"expireSecond": 36000}))
+        return httpx.Response(200, json=envelope(None, code=5107, success=False))
+
+    with pytest.raises(ApiClientError) as caught:
+        client_with_handler(handler, credential_store=store).check_access_info("old-jwt-value")
+
+    assert caught.value.code == "SERVICE_RESPONSE_INVALID"
+    assert store.credentials == original
+    assert store.saved == []
+
+
+def test_stale_caller_token_uses_already_refreshed_secure_token_without_another_refresh() -> None:
+    calls: list[tuple[str, str]] = []
+    store = MemoryCredentialStore(
+        Credentials(jwt="current-jwt-value", client_code="CLIENT", cid="CUSTOMER")
+    )
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append((request.url.path, request.headers.get("Token", "")))
+        return httpx.Response(200, json=envelope({"dailyLimit": 1000, "usedToday": 12}))
+
+    result = client_with_handler(handler, credential_store=store).get_fare_search_usage(
+        "stale-jwt-value"
+    )
+
+    assert result.used_today == 12
+    assert calls == [("/cli/fare-search/usage", "current-jwt-value")]
+
+
+def test_refresh_secure_store_failure_returns_stable_error_without_exposing_token() -> None:
+    class FailingStore(MemoryCredentialStore):
+        def save_credentials(self, credentials: Credentials) -> None:
+            del credentials
+            raise SecureStoreError("raw keychain detail old-jwt-value")
+
+    store = FailingStore(Credentials(jwt="old-jwt-value", client_code="CLIENT", cid="CUSTOMER"))
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/cli/session/refresh":
+            return httpx.Response(
+                200,
+                json=envelope({"token": "new-jwt-value", "expireSecond": 36000}),
+            )
+        return httpx.Response(200, json=envelope(None, code=5555, success=False))
+
+    with pytest.raises(ApiClientError) as caught:
+        client_with_handler(handler, credential_store=store).check_access_info("old-jwt-value")
+
+    assert caught.value.code == "SECURE_STORE_UNAVAILABLE"
+    assert "old-jwt-value" not in str(caught.value)
+    assert "new-jwt-value" not in str(caught.value)
 
 
 def test_errors_and_logs_never_contain_request_secrets(caplog: pytest.LogCaptureFixture) -> None:

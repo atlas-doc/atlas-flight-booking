@@ -33,7 +33,7 @@ def build_booking_runtime(*, mode: CustomerMode = CustomerMode.PROD) -> BookingR
     settings = InternalSettings()
     resolver = EndpointResolver(settings)
     secrets = KeyringSecretStore()
-    control_api = AtlasApiClient(settings)
+    control_api = AtlasApiClient(settings, credential_store=secrets)
     access = AccessManager(api=control_api, secrets=secrets, resolver=resolver, mode=mode)
     business = AtlasBusinessClient(settings)
     normalizer = RoutingNormalizer()

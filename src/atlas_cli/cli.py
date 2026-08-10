@@ -119,8 +119,8 @@ def current_customer_mode() -> CustomerMode:
 def build_auth_service() -> AuthService:
     configure_logging()
     settings = InternalSettings()
-    api = AtlasApiClient(settings)
     secrets = KeyringSecretStore()
+    api = AtlasApiClient(settings, credential_store=secrets)
     mode = current_customer_mode()
     return AuthService(
         api=api,
@@ -140,8 +140,8 @@ def build_auth_service() -> AuthService:
 def build_doctor_service() -> DoctorService:
     configure_logging()
     settings = InternalSettings()
-    api = AtlasApiClient(settings)
     secrets = KeyringSecretStore()
+    api = AtlasApiClient(settings, credential_store=secrets)
     mode = current_customer_mode()
     auth = AuthService(
         api=api,
@@ -168,8 +168,8 @@ def build_doctor_service() -> DoctorService:
 def build_search_service() -> SearchService:
     configure_logging()
     settings = InternalSettings()
-    control_api = AtlasApiClient(settings)
     secrets = KeyringSecretStore()
+    control_api = AtlasApiClient(settings, credential_store=secrets)
     access = AccessManager(
         api=control_api,
         secrets=secrets,
