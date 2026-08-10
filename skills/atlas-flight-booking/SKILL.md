@@ -9,7 +9,7 @@ Operate through the Atlas Flight Booking CLI only. Preserve every opaque ID exac
 
 ## Start
 
-Run `atlas-flight --version`. If the command is unavailable, explain that Atlas Flight Booking requires its CLI and ask for permission to install it. After permission, run exactly `uv tool install --python 3.12 git+https://github.com/atlas-doc/atlas-flight-booking.git`, then verify `atlas-flight --version`. If `uv` is unavailable, direct the user to `https://docs.astral.sh/uv/getting-started/installation/` and stop; do not install through another Python environment.
+Run `atlas-flight --version`. If the command is unavailable, explain that Atlas Flight Booking requires its CLI and ask for permission to install it. After permission, run exactly `uv tool install --python 3.12 atlas-flight-booking==0.3.8`, then verify `atlas-flight --version`. If `uv` is unavailable, direct the user to `https://docs.astral.sh/uv/getting-started/installation/` and stop; do not install through another Python environment.
 
 Then run `atlas-flight auth status --json`. If authorization is required, follow `references/cli-contract.md`. Explain that Atlas authorization is required before the interrupted task can continue and present the returned URL as a descriptive clickable link. Briefly explain what the user will do on the page: sign in and authorize with an existing ATRIP account, or choose **Create one**, finish registration, then sign in and authorize. Ask the user to return to the conversation and reply after authorization is complete. Stop the current turn without polling. After the user confirms completion, poll once for at most 120 seconds and resume the interrupted task only after `AUTHORIZED`.
 

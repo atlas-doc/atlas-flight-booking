@@ -18,7 +18,7 @@ invalid_argument() {
 
 case "${scenario}:${command_line}" in
   *:'--version')
-    emit 'atlas-flight 0.3.7'
+    emit 'atlas-flight 0.3.8'
     ;;
   auth_required:'auth status --json')
     emit '{"schema_version":"1","status":"action_required","code":"AUTHORIZATION_REQUIRED","message":"Authorization required","retryable":false,"data":{"authenticated":false},"details":{}}'

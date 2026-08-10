@@ -72,7 +72,7 @@ check_structure_and_contracts() {
     fail "authorization URL provenance is not explicit"
   rg -Fiq 'retain the pending authorization session' "$error_ref" ||
     fail "auth service outage must retain pending session"
-  rg -Fq 'uv tool install --python 3.12 git+https://github.com/atlas-doc/atlas-flight-booking.git' "$skill_dir/SKILL.md" ||
+  rg -Fq 'uv tool install --python 3.12 atlas-flight-booking==0.3.8' "$skill_dir/SKILL.md" ||
     fail "missing exact GitHub CLI installation command"
   rg -Fiq 'ask for permission to install it' "$skill_dir/SKILL.md" ||
     fail "CLI installation must require user permission"
@@ -202,7 +202,7 @@ check_fixture() {
     auth_service_unavailable price_decreased price_increased baggage_unavailable seat_unavailable \
     passenger_required contact_invalid order_ready order_without_link payment_unknown ticketing_pending ticketed subscription_required; do
     version="$(PATH="$PWD/tests/skill/fixtures:$PATH" ATLAS_TEST_SCENARIO="$scenario" atlas-flight --version)"
-    test "$version" = 'atlas-flight 0.3.7' || fail "inconsistent plain-text version for $scenario: $version"
+    test "$version" = 'atlas-flight 0.3.8' || fail "inconsistent plain-text version for $scenario: $version"
   done
 
   fixture_json auth_required AUTHORIZATION_REQUIRED auth status --json
