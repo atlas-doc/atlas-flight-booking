@@ -613,6 +613,46 @@ def test_refresh_code_5120_requires_reauthorization_without_overwriting_credenti
     assert store.saved == []
 
 
+def test_refresh_code_5121_is_a_retryable_temporary_failure() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path == "/cli/session/refresh"
+        return httpx.Response(
+            200,
+            json=envelope(None, request_id="req-refresh-retry", code=5121, success=False),
+        )
+
+    with pytest.raises(ApiClientError) as caught:
+        client_with_handler(handler).refresh_session("jwt-value")
+
+    assert caught.value.code == "SERVICE_TEMPORARILY_UNAVAILABLE"
+    assert caught.value.retryable is True
+    assert caught.value.request_id == "req-refresh-retry"
+
+
+def test_automatic_refresh_5121_preserves_current_credentials_for_later_retry() -> None:
+    original = Credentials(jwt="old-jwt-value", client_code="CLIENT", cid="CUSTOMER")
+    store = MemoryCredentialStore(original)
+    calls: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(request.url.path)
+        if request.url.path == "/cli/session/refresh":
+            return httpx.Response(
+                200,
+                json=envelope(None, request_id="req-refresh-retry", code=5121, success=False),
+            )
+        return httpx.Response(200, json=envelope(None, code=5555, success=False))
+
+    with pytest.raises(ApiClientError) as caught:
+        client_with_handler(handler, credential_store=store).check_access_info("old-jwt-value")
+
+    assert caught.value.code == "SERVICE_TEMPORARILY_UNAVAILABLE"
+    assert caught.value.retryable is True
+    assert calls == ["/cli/agent/access-info/check", "/cli/session/refresh"]
+    assert store.credentials == original
+    assert store.saved == []
+
+
 def test_refreshed_request_session_error_does_not_refresh_twice() -> None:
     calls: list[str] = []
     store = MemoryCredentialStore(

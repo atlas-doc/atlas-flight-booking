@@ -487,6 +487,13 @@ class AtlasApiClient:
             )
         if service_code == 5120:
             self._raise_authorization_required(request_id)
+        if service_code == 5121:
+            self._raise_public_error(
+                code="SERVICE_TEMPORARILY_UNAVAILABLE",
+                message="Service temporarily unavailable",
+                retryable=True,
+                request_id=request_id,
+            )
         if service_code == 5119:
             self._raise_public_error(
                 code="AUTH_EXPIRED",
