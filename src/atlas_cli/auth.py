@@ -151,6 +151,33 @@ class AuthService:
             data=capability_data(access, mode=self._customer_mode),
         )
 
+    def refresh_session(self) -> CommandResult:
+        try:
+            credentials = self._secrets.load_credentials()
+        except SecureStoreError:
+            return self._secure_store_unavailable()
+        if credentials is None:
+            return action_required_result(
+                "AUTHORIZATION_REQUIRED",
+                "Authorization required",
+            )
+
+        try:
+            refreshed = self._api.refresh_session(credentials.jwt)
+            self._secrets.save_credentials(
+                credentials.model_copy(update={"jwt": refreshed.token})
+            )
+        except SecureStoreError:
+            return self._secure_store_unavailable()
+        except ApiClientError as error:
+            return self._result_from_protected_api_error(error)
+        return success_result(
+            "SESSION_REFRESHED",
+            "Authorization session refreshed",
+            request_id=refreshed.request_id,
+            data={"expire_seconds": refreshed.expire_seconds},
+        )
+
     def poll(self, timeout_seconds: int) -> CommandResult:
         try:
             pending = self._secrets.load_pending_auth()

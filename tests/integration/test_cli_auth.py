@@ -106,6 +106,28 @@ def test_real_cli_builder_routes_api_warnings_to_file_not_json_stderr(monkeypatc
     assert json.loads(result.stdout)["code"] == "AUTH_SERVICE_UNAVAILABLE"
 
 
+def test_hidden_session_refresh_command_emits_only_safe_json(monkeypatch) -> None:
+    class FakeSessionService:
+        def refresh_session(self):
+            return success_result(
+                "SESSION_REFRESHED",
+                "Authorization session refreshed",
+                request_id="req-refresh",
+                data={"expire_seconds": 36000},
+            )
+
+    monkeypatch.setattr("atlas_cli.cli.build_auth_service", FakeSessionService)
+
+    result = runner.invoke(app, ["session", "refresh", "--json"])
+
+    assert result.exit_code == 0
+    assert result.stderr == ""
+    payload = json.loads(result.stdout)
+    assert payload["code"] == "SESSION_REFRESHED"
+    assert payload["data"] == {"expire_seconds": 36000}
+    assert "token" not in result.stdout.lower()
+
+
 def test_json_mode_parse_error_is_one_invalid_argument_object() -> None:
     result = runner.invoke(app, ["auth", "status", "--unsupported", "--json"])
 

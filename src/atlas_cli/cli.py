@@ -83,6 +83,7 @@ class AgentFriendlyGroup(TyperGroup):
 
 app = typer.Typer(add_completion=False, cls=AgentFriendlyGroup)
 auth_app = typer.Typer(add_completion=False)
+session_app = typer.Typer(add_completion=False)
 offer_app = typer.Typer(add_completion=False)
 booking_app = typer.Typer(add_completion=False)
 baggage_app = typer.Typer(add_completion=False)
@@ -90,6 +91,7 @@ seat_app = typer.Typer(add_completion=False)
 order_app = typer.Typer(add_completion=False)
 environment_app = typer.Typer(add_completion=False)
 app.add_typer(auth_app, name="auth")
+app.add_typer(session_app, name="session", hidden=True)
 app.add_typer(offer_app, name="offer")
 app.add_typer(booking_app, name="booking")
 booking_app.add_typer(baggage_app, name="baggage")
@@ -252,6 +254,13 @@ def auth_poll(
         )
         _write_result(result, json_output=json_output)
     _write_result(build_auth_service().poll(timeout_seconds), json_output=json_output)
+
+
+@session_app.command("refresh")
+def session_refresh(
+    json_output: bool = typer.Option(False, "--json", help="Emit one JSON result object."),
+) -> None:
+    _write_result(build_auth_service().refresh_session(), json_output=json_output)
 
 
 @app.command("doctor")
