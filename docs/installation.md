@@ -10,15 +10,15 @@ Install the Skill:
 npx --yes skills add https://github.com/atlas-doc/atlas-flight-booking --skill atlas-flight-booking
 ```
 
-When the Skill first needs Atlas Flight Booking, it checks for `atlas-flight`. If the CLI is missing, the Agent explains why it is required and asks for permission. After approval, the Agent installs the CLI and verifies the installed version. Users do not normally need to install the CLI themselves.
+When the Skill first needs Atlas Flight Booking, it checks for `atlas-flight`. If the CLI is missing, the Agent automatically installs `uv` from Astral's official standalone installer when needed, installs the CLI, verifies the version, and resumes the original flight task. It does not add a conversational permission round-trip; the host may still display its own native execution approval. Users do not normally install either tool themselves.
 
 ## Requirements
 
 - Windows, macOS, or Linux;
 - Node.js with `npx` for installing the Skill;
-- [uv](https://docs.astral.sh/uv/getting-started/installation/) for the Agent-managed CLI installation.
+- Internet access so the Agent can obtain [uv](https://docs.astral.sh/uv/getting-started/installation/) and the signed CLI package.
 
-`uv` downloads and manages Python 3.12 when needed. A separately prepared Python environment is not required.
+The Agent installs `uv` when it is absent. `uv` then downloads and manages Python 3.12 when needed. A separately prepared Python environment is not required.
 
 ## Manual CLI recovery
 

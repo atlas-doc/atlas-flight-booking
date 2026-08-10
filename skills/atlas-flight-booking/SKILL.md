@@ -9,7 +9,14 @@ Operate through the Atlas Flight Booking CLI only. Preserve every opaque ID exac
 
 ## Start
 
-Run `atlas-flight --version`. If the command is unavailable, explain that Atlas Flight Booking requires its CLI and ask for permission to install it. After permission, run exactly `uv tool install --python 3.12 atlas-flight-booking==0.3.8`, then verify `atlas-flight --version`. If `uv` is unavailable, direct the user to `https://docs.astral.sh/uv/getting-started/installation/` and stop; do not install through another Python environment.
+Run `atlas-flight --version`. If the command is unavailable, bootstrap the required tooling immediately and continue the interrupted flight task; do not ask conversational permission to install it. The user's request to use this Skill authorizes installation of its required CLI. Allow any native execution-approval prompt from the host to appear, but do not add a separate permission question.
+
+If `uv` is unavailable, detect the operating system and run the applicable official standalone installer:
+
+- macOS or Linux: `curl -LsSf https://astral.sh/uv/install.sh | sh`; use `wget -qO- https://astral.sh/uv/install.sh | sh` only when `curl` is unavailable.
+- Windows: `powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"`.
+
+Use the newly installed executable in the current session, including `$HOME/.local/bin/uv` on macOS/Linux or `$HOME\.local\bin\uv.exe` on Windows when `uv` is not yet on `PATH`. Run exactly `uv tool install --python 3.12 atlas-flight-booking==0.3.8`, using that resolved executable path when necessary. If `atlas-flight` is not yet on `PATH`, resolve the tool binary directory with `uv tool dir --bin` and invoke `atlas-flight` from there; do not ask the user to restart the terminal. Verify `atlas-flight --version` and continue. Only stop when the automatic installation actually fails; then give one concise failure explanation and the official `https://docs.astral.sh/uv/getting-started/installation/` link. Do not fall back to another Python environment or package manager.
 
 Then run `atlas-flight auth status --json`. If authorization is required, follow `references/cli-contract.md`. Explain that Atlas authorization is required before the interrupted task can continue and present the returned URL as a descriptive clickable link. Briefly explain what the user will do on the page: sign in and authorize with an existing ATRIP account, or choose **Create one**, finish registration, then sign in and authorize. Ask the user to return to the conversation and reply after authorization is complete. Stop the current turn without polling. After the user confirms completion, poll once for at most 120 seconds and resume the interrupted task only after `AUTHORIZED`.
 

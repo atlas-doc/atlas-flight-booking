@@ -73,9 +73,15 @@ check_structure_and_contracts() {
   rg -Fiq 'retain the pending authorization session' "$error_ref" ||
     fail "auth service outage must retain pending session"
   rg -Fq 'uv tool install --python 3.12 atlas-flight-booking==0.3.8' "$skill_dir/SKILL.md" ||
-    fail "missing exact GitHub CLI installation command"
-  rg -Fiq 'ask for permission to install it' "$skill_dir/SKILL.md" ||
-    fail "CLI installation must require user permission"
+    fail "missing exact PyPI CLI installation command"
+  rg -Fiq 'do not ask conversational permission to install it' "$skill_dir/SKILL.md" ||
+    fail "CLI bootstrap must not add a conversational permission round-trip"
+  rg -Fq 'curl -LsSf https://astral.sh/uv/install.sh | sh' "$skill_dir/SKILL.md" ||
+    fail "missing official macOS/Linux uv installer"
+  rg -Fq 'powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"' "$skill_dir/SKILL.md" ||
+    fail "missing official Windows uv installer"
+  rg -Fiq 'do not ask the user to restart the terminal' "$skill_dir/SKILL.md" ||
+    fail "bootstrap must continue in the current session"
 
   for phrase in \
     'Explain that Atlas authorization is required before the interrupted task can continue' \
@@ -103,9 +109,11 @@ check_structure_and_contracts() {
     fail "restricted environment content found"
   fi
 
-  if rg -n -i 'curl[[:space:]]|/(search|verify|order|pay|seat|baggage)(\.do|/|\?)|/cli/(auth|pre|production|access)|x-atlas-client|cliauthtoken|access[-_ ]?key|secret[-_ ]?key|AK/SK|JWT|routingIdentifier|sessionId|productCode|upstream (status|code)|status (number|[0-9]{3,})' "$skill_dir"; then
+  if rg -n -i '/(search|verify|order|pay|seat|baggage)(\.do|/|\?)|/cli/(auth|pre|production|access)|x-atlas-client|cliauthtoken|access[-_ ]?key|secret[-_ ]?key|AK/SK|JWT|routingIdentifier|sessionId|productCode|upstream (status|code)|status (number|[0-9]{3,})' "$skill_dir"; then
     fail "direct API or credential guidance found"
   fi
+  unexpected_curl="$(rg -n -i 'curl[[:space:]]' "$skill_dir" | rg -v -F 'curl -LsSf https://astral.sh/uv/install.sh | sh' || true)"
+  test -z "$unexpected_curl" || fail "unexpected curl guidance found: $unexpected_curl"
 
   rg -q '^name: atlas-flight-booking$' "$skill_dir/SKILL.md"
   rg -q '^description: Use when ' "$skill_dir/SKILL.md"
@@ -155,6 +163,14 @@ check_structure_and_contracts() {
     'uses only `order status`'; do
     rg -Fiq "$phrase" "$scenarios" ||
       fail "missing booking evaluation scenario: $phrase"
+  done
+  for phrase in \
+    "Astral's official standalone installer" \
+    'without asking conversational permission' \
+    'without asking the user to restart the terminal' \
+    'official uv installation link'; do
+    rg -Fiq "$phrase" "$scenarios" ||
+      fail "missing automatic bootstrap evaluation: $phrase"
   done
 
   uv run --frozen python scripts/quick_validate_skill.py "$skill_dir"

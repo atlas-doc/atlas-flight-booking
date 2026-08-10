@@ -10,15 +10,15 @@
 npx --yes skills add https://github.com/atlas-doc/atlas-flight-booking --skill atlas-flight-booking
 ```
 
-Skill 第一次需要使用 Atlas Flight Booking 时，会检查 `atlas-flight`。如果 CLI 尚未安装，Agent 会说明用途并请求用户许可；获得同意后，Agent 自动安装 CLI 并验证版本。普通用户通常不需要自己安装 CLI。
+Skill 第一次需要使用 Atlas Flight Booking 时，会检查 `atlas-flight`。如果 CLI 尚未安装，Agent 会在需要时通过 Astral 官方独立安装器自动安装 `uv`，再安装 CLI、验证版本并继续原来的航班任务。它不会额外增加一轮对话许可；宿主环境仍可能显示自身的命令执行审批。普通用户通常不需要自己安装这两个工具。
 
 ## 运行要求
 
 - Windows、macOS 或 Linux；
 - 使用 `npx` 安装 Skill，因此需要 Node.js；
-- Agent 通过 [uv](https://docs.astral.sh/uv/getting-started/installation/) 管理 CLI。
+- 可访问互联网，以便 Agent 获取 [uv](https://docs.astral.sh/uv/getting-started/installation/) 和已签名的 CLI 包。
 
-需要时，`uv` 会自动下载并管理 Python 3.12，不需要用户另外准备 Python 环境。
+如果缺少 `uv`，Agent 会先自动安装。随后 `uv` 会按需下载并管理 Python 3.12，不需要用户另外准备 Python 环境。
 
 ## 手动恢复 CLI
 

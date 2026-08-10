@@ -23,7 +23,7 @@ Atlas Flight Booking is an Agent-friendly CLI and Skill for searching live fligh
 
 The Skill controls the conversation and confirmation checkpoints. The `atlas-flight` CLI owns authorization, secure credential storage, API access, normalized output, and side-effect safety.
 
-Users install only the Skill. On first use, the Skill checks for the CLI and, when it is missing, explains why it is required and asks for permission before the Agent installs it. The machine only needs [uv](https://docs.astral.sh/uv/getting-started/installation/) available; no separately prepared Python environment is required.
+Users install only the Skill. On the first flight task, the Skill checks for the CLI and automatically prepares the official `uv` installer and Atlas CLI when either is missing. It does not add a conversational permission round-trip; a host environment may still show its own native execution approval. No separately prepared Python environment is required.
 
 ## Supported workflow
 
@@ -44,9 +44,7 @@ Optional baggage or seat unavailability does not block the main booking flow. Th
 npx --yes skills add https://github.com/atlas-doc/atlas-flight-booking --skill atlas-flight-booking
 ```
 
-The Skill checks for the CLI when it starts. If the CLI is missing, it explains the requirement and asks for permission before installing anything.
-
-After permission, the Agent installs the signed release from [PyPI](https://pypi.org/project/atlas-flight-booking/) with `uv tool install --python 3.12 atlas-flight-booking==0.3.8`. Users do not need to install the CLI separately.
+The Skill checks for the CLI when it starts. If the CLI is missing, the Agent automatically installs `uv` from Astral's official standalone installer when needed, then installs the signed Atlas CLI release from [PyPI](https://pypi.org/project/atlas-flight-booking/) with `uv tool install --python 3.12 atlas-flight-booking==0.3.8`. Users do not need to install either tool separately. The Agent only stops when automatic installation actually fails.
 
 [Installation details and troubleshooting →](docs/installation.md)
 

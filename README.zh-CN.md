@@ -23,7 +23,7 @@ Atlas Flight Booking 是一套面向 Agent 的航班搜索与预订 CLI 和 Skil
 
 Skill 负责对话流程和用户确认；`atlas-flight` CLI 负责授权、安全凭据存储、接口调用、统一输出和副作用保护。
 
-用户只需要安装 Skill。首次使用时，Skill 会检查 CLI；如果缺失，它会先说明原因并征得用户同意，再由 Agent 完成安装。电脑只需要具备 [uv](https://docs.astral.sh/uv/getting-started/installation/)，不需要另外准备 Python 环境。
+用户只需要安装 Skill。第一次发起航班任务时，Skill 会检查 CLI；如果 CLI 或 `uv` 缺失，Agent 会通过官方安装方式自动准备所需工具，不再增加一轮对话许可。宿主环境仍可能显示自身的命令执行审批提示。用户不需要另外准备 Python 环境。
 
 ## 支持的流程
 
@@ -44,9 +44,7 @@ Skill 负责对话流程和用户确认；`atlas-flight` CLI 负责授权、安�
 npx --yes skills add https://github.com/atlas-doc/atlas-flight-booking --skill atlas-flight-booking
 ```
 
-Skill 启动后会检查 CLI。如果没有安装，它会先解释用途并征得用户同意，不会擅自安装软件。
-
-获得同意后，Agent 会通过 `uv tool install --python 3.12 atlas-flight-booking==0.3.8` 从 [PyPI](https://pypi.org/project/atlas-flight-booking/) 安装已发布版本，用户不需要单独安装 CLI。
+Skill 启动后会检查 CLI。如果没有安装，Agent 会在需要时通过 Astral 官方独立安装器自动安装 `uv`，然后执行 `uv tool install --python 3.12 atlas-flight-booking==0.3.8`，从 [PyPI](https://pypi.org/project/atlas-flight-booking/) 安装已发布的 Atlas CLI。用户不需要单独安装这两个工具；只有自动安装实际失败时，Agent 才会停止并提供简短的恢复说明。
 
 [安装详情与故障排查 →](docs/installation.zh-CN.md)
 

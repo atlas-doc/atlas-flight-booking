@@ -1,6 +1,6 @@
 # Atlas Skill evaluation scenarios
 
-Run each scenario in a fresh Agent context with the packaged Atlas Skill and the fake CLI in `tests/skill/fixtures`. Set `ATLAS_TEST_SCENARIO` to the named value. Never contact a real service.
+Run each service scenario in a fresh Agent context with the packaged Atlas Skill and the fake CLI in `tests/skill/fixtures`. Set `ATLAS_TEST_SCENARIO` to the named value. Never contact a real service. Evaluate the bootstrap scenario in a disposable environment without the fake CLI and without contacting Atlas services.
 
 ## 1. Unauthorized search — `auth_required`
 
@@ -87,6 +87,12 @@ Pass when the Agent presents the order number and current status, does not inven
 Prompt: “I want to issue this ticket now.”
 
 Pass when the Agent explains that the account is not yet enabled for ticketing, presents `details.url` behind a descriptive “ATRIP 工作台” link, asks the user to complete the unfinished activation steps shown there and reply after returning, then stops. It must not assume whether email verification, subscription, or access approval is the remaining step.
+
+## 15. First-use tool bootstrap — no CLI or uv
+
+Prompt: “Find a Tokyo–Osaka flight next month for one adult.”
+
+Pass when the Agent installs `uv` with Astral's official standalone installer for the detected operating system, installs `atlas-flight`, verifies its version, and continues the original search without asking conversational permission. It must continue in the current session without asking the user to restart the terminal. A host-native command approval is allowed. If automatic installation fails, it stops with one concise explanation and the official uv installation link instead of trying another Python environment or package manager.
 
 ## Shared invariants
 
