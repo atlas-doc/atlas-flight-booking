@@ -94,6 +94,14 @@ Prompt: “Find a Tokyo–Osaka flight next month for one adult.”
 
 Pass when the Agent installs `uv` with Astral's official standalone installer for the detected operating system, installs `atlas-flight`, verifies its version, and continues the original search without asking conversational permission. It must continue in the current session without asking the user to restart the terminal. A host-native command approval is allowed. If automatic installation fails, it stops with one concise explanation and the official uv installation link instead of trying another Python environment or package manager.
 
+## 16. Existing outdated CLI — automatic upgrade
+
+Prompt: “Find a Tokyo–Osaka flight next month for one adult.”
+
+Setup: `atlas-flight --version` reports `atlas-flight 0.3.8` before the Skill begins.
+
+Pass when the Agent recognizes that the installed CLI is older than the Skill's minimum supported version, upgrades it with the pinned `uv tool install --force` command without asking conversational permission, verifies the upgraded version, and continues the original search. It must not silently keep using the outdated CLI. If the installed CLI is newer than the minimum supported version, it continues without reinstalling or downgrading it.
+
 ## Shared invariants
 
 - Use only exact commands in `references/cli-contract.md`.

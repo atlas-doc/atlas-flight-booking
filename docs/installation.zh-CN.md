@@ -10,7 +10,7 @@
 npx --yes skills add https://github.com/atlas-doc/atlas-flight-booking-skill --skill atlas-flight-booking
 ```
 
-Skill 第一次需要使用 Atlas Flight Booking 时，会检查 `atlas-flight`。如果 CLI 尚未安装，Agent 会在需要时通过 Astral 官方独立安装器自动安装 `uv`，再安装 CLI、验证版本并继续原来的航班任务。它不会额外增加一轮对话许可；宿主环境仍可能显示自身的命令执行审批。普通用户通常不需要自己安装这两个工具。
+Skill 每次需要使用 Atlas Flight Booking 时，都会检查 `atlas-flight` 的版本。如果 CLI 尚未安装或低于 Skill 要求的最低版本，Agent 会在需要时通过 Astral 官方独立安装器自动安装 `uv`，再安装或升级 CLI、验证版本并继续原来的航班任务。它不会降级更高版本，也不会额外增加一轮对话许可；宿主环境仍可能显示自身的命令执行审批。普通用户通常不需要自己安装这两个工具。
 
 ## 运行要求
 
@@ -25,7 +25,7 @@ Skill 第一次需要使用 Atlas Flight Booking 时，会检查 `atlas-flight`�
 这是提供给技术支持和开发者的高级恢复方式。只有 Agent 无法完成自动安装时才需要使用。
 
 ```bash
-uv tool install --python 3.12 atlas-flight-booking==0.3.9
+uv tool install --force --python 3.12 atlas-flight-booking==0.3.10
 ```
 
 验证安装：
@@ -35,7 +35,7 @@ atlas-flight --version
 atlas-flight doctor --json
 ```
 
-版本命令应返回 `atlas-flight 0.3.9`。
+版本命令应返回 `atlas-flight 0.3.10` 或更高版本。
 
 ## 安装后找不到命令
 
@@ -56,7 +56,7 @@ uv tool update-shell
 ## 重新安装或修复
 
 ```bash
-uv tool install --force --python 3.12 atlas-flight-booking==0.3.9
+uv tool install --force --python 3.12 atlas-flight-booking==0.3.10
 ```
 
 重新安装 CLI 不会删除保存在操作系统安全凭据设施中的 Atlas 授权信息。

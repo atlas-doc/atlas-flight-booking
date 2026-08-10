@@ -8,5 +8,5 @@ runner = CliRunner()
 def test_version_is_local_plain_text() -> None:
     result = runner.invoke(app, ["--version"])
     assert result.exit_code == 0
-    assert result.stdout == "atlas-flight 0.3.9\n"
+    assert result.stdout == "atlas-flight 0.3.10\n"
     assert result.stderr == ""

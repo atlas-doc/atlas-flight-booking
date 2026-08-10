@@ -72,10 +72,18 @@ check_structure_and_contracts() {
     fail "authorization URL provenance is not explicit"
   rg -Fiq 'retain the pending authorization session' "$error_ref" ||
     fail "auth service outage must retain pending session"
-  rg -Fq 'uv tool install --python 3.12 atlas-flight-booking==0.3.9' "$skill_dir/SKILL.md" ||
+  rg -Fq 'uv tool install --force --python 3.12 atlas-flight-booking==0.3.10' "$skill_dir/SKILL.md" ||
     fail "missing exact PyPI CLI installation command"
-  rg -Fiq 'do not ask conversational permission to install it' "$skill_dir/SKILL.md" ||
-    fail "CLI bootstrap must not add a conversational permission round-trip"
+  for phrase in \
+    'minimum supported CLI version' \
+    'version is older than `0.3.10`' \
+    'never downgrade a newer CLI' \
+    'installation or upgrade actually fails'; do
+    rg -Fiq "$phrase" "$skill_dir/SKILL.md" ||
+      fail "missing CLI version-gate instruction: $phrase"
+  done
+  rg -Fiq 'do not ask conversational permission to install or upgrade it' "$skill_dir/SKILL.md" ||
+    fail "CLI bootstrap or upgrade must not add a conversational permission round-trip"
   rg -Fq 'curl -LsSf https://astral.sh/uv/install.sh | sh' "$skill_dir/SKILL.md" ||
     fail "missing official macOS/Linux uv installer"
   rg -Fq 'powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"' "$skill_dir/SKILL.md" ||
@@ -174,6 +182,16 @@ check_structure_and_contracts() {
     rg -Fiq "$phrase" "$scenarios" ||
       fail "missing automatic bootstrap evaluation: $phrase"
   done
+  for phrase in \
+    'Existing outdated CLI' \
+    'reports `atlas-flight 0.3.8`' \
+    'older than the Skill' \
+    'without asking conversational permission' \
+    'must not silently keep using the outdated CLI' \
+    'without reinstalling or downgrading it'; do
+    rg -Fiq "$phrase" "$scenarios" ||
+      fail "missing automatic CLI upgrade evaluation: $phrase"
+  done
 
   uv run --frozen python scripts/quick_validate_skill.py "$skill_dir"
 }
@@ -220,7 +238,7 @@ check_fixture() {
     auth_service_unavailable price_decreased price_increased baggage_unavailable seat_unavailable \
     passenger_required contact_invalid order_ready order_without_link payment_unknown ticketing_pending ticketed subscription_required; do
     version="$(PATH="$PWD/tests/skill/fixtures:$PATH" ATLAS_TEST_SCENARIO="$scenario" atlas-flight --version)"
-    test "$version" = 'atlas-flight 0.3.9' || fail "inconsistent plain-text version for $scenario: $version"
+    test "$version" = 'atlas-flight 0.3.10' || fail "inconsistent plain-text version for $scenario: $version"
   done
 
   fixture_json auth_required AUTHORIZATION_REQUIRED auth status --json

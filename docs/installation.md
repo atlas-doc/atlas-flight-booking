@@ -10,7 +10,7 @@ Install the Skill:
 npx --yes skills add https://github.com/atlas-doc/atlas-flight-booking-skill --skill atlas-flight-booking
 ```
 
-When the Skill first needs Atlas Flight Booking, it checks for `atlas-flight`. If the CLI is missing, the Agent automatically installs `uv` from Astral's official standalone installer when needed, installs the CLI, verifies the version, and resumes the original flight task. It does not add a conversational permission round-trip; the host may still display its own native execution approval. Users do not normally install either tool themselves.
+Whenever the Skill needs Atlas Flight Booking, it checks the `atlas-flight` version. If the CLI is missing or older than the Skill's minimum supported version, the Agent automatically installs `uv` from Astral's official standalone installer when needed, installs or upgrades the CLI, verifies the version, and resumes the original flight task. It does not downgrade newer versions or add a conversational permission round-trip; the host may still display its own native execution approval. Users do not normally install either tool themselves.
 
 ## Requirements
 
@@ -25,7 +25,7 @@ The Agent installs `uv` when it is absent. `uv` then downloads and manages Pytho
 This is an advanced recovery path for support and development. Use it only when the Agent-managed installation cannot complete.
 
 ```bash
-uv tool install --python 3.12 atlas-flight-booking==0.3.9
+uv tool install --force --python 3.12 atlas-flight-booking==0.3.10
 ```
 
 Verify the installation:
@@ -35,7 +35,7 @@ atlas-flight --version
 atlas-flight doctor --json
 ```
 
-The version command should report `atlas-flight 0.3.9`.
+The version command should report `atlas-flight 0.3.10` or newer.
 
 ## Command not found after installation
 
@@ -56,7 +56,7 @@ Close and reopen the terminal before verifying `atlas-flight --version` again.
 ## Reinstall or repair
 
 ```bash
-uv tool install --force --python 3.12 atlas-flight-booking==0.3.9
+uv tool install --force --python 3.12 atlas-flight-booking==0.3.10
 ```
 
 Reinstalling the CLI does not remove Atlas authorization stored in the operating system's secure credential facility.

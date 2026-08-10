@@ -29,7 +29,7 @@ Atlas Flight Booking is an Agent Skill for searching live flight offers, verifyi
 
 The Skill controls the conversation and confirmation checkpoints. The `atlas-flight` CLI owns authorization, secure credential storage, API access, normalized output, and side-effect safety.
 
-Users install only the Skill. On the first flight task, the Skill checks for the CLI and automatically prepares the official `uv` installer and Atlas CLI when either is missing. It does not add a conversational permission round-trip; a host environment may still show its own native execution approval. No separately prepared Python environment is required.
+Users install only the Skill. On each flight task, the Skill checks the CLI version and automatically prepares the official `uv` installer and Atlas CLI when the CLI is missing or older than the minimum supported version. It does not add a conversational permission round-trip; a host environment may still show its own native execution approval. No separately prepared Python environment is required.
 
 ## Supported workflow
 
@@ -46,7 +46,7 @@ Optional baggage or seat unavailability does not block the main booking flow. Th
 
 ## Automatic CLI setup
 
-The Skill checks for the CLI when it starts. If the CLI is missing, the Agent automatically installs `uv` from Astral's official standalone installer when needed, then installs the signed Atlas CLI release from [PyPI](https://pypi.org/project/atlas-flight-booking/) with `uv tool install --python 3.12 atlas-flight-booking==0.3.9`. Users do not need to install either tool separately. The Agent only stops when automatic installation actually fails.
+The Skill checks the CLI version when it starts. If the CLI is missing or older than the minimum supported version, the Agent automatically installs `uv` from Astral's official standalone installer when needed, then installs or upgrades the signed Atlas CLI release from [PyPI](https://pypi.org/project/atlas-flight-booking/) with `uv tool install --force --python 3.12 atlas-flight-booking==0.3.10`. A newer CLI is never downgraded. Users do not need to install either tool separately. The Agent only stops when automatic installation or upgrade actually fails.
 
 [Installation details and troubleshooting →](docs/installation.md)
 
