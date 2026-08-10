@@ -2,13 +2,13 @@
   <a href="https://atlaslovestravel.com/?utm_source=skill">
     <img src="assets/atlas-logo.svg" alt="Atlas" width="180">
   </a>
-  <h1>Atlas Flight Booking</h1>
-  <p>面向 Agent 的实时航班搜索与预订能力。</p>
+  <h1>Atlas Flight Booking Skill</h1>
+  <p>让 AI Agent 搜索、核价并预订实时机票。</p>
   <p>
     <a href="https://pypi.org/project/atlas-flight-booking/"><img src="https://img.shields.io/pypi/v/atlas-flight-booking?label=PyPI" alt="PyPI 版本"></a>
-    <a href="https://github.com/atlas-doc/atlas-flight-booking/releases/latest"><img src="https://img.shields.io/github/v/release/atlas-doc/atlas-flight-booking?label=release" alt="最新版本"></a>
-    <a href="https://github.com/atlas-doc/atlas-flight-booking/stargazers"><img src="https://img.shields.io/github/stars/atlas-doc/atlas-flight-booking?style=flat" alt="GitHub Stars"></a>
-    <a href="LICENSE"><img src="https://img.shields.io/github/license/atlas-doc/atlas-flight-booking" alt="Apache 2.0 许可证"></a>
+    <a href="https://github.com/atlas-doc/atlas-flight-booking-skill/releases/latest"><img src="https://img.shields.io/github/v/release/atlas-doc/atlas-flight-booking-skill?label=release" alt="最新版本"></a>
+    <a href="https://github.com/atlas-doc/atlas-flight-booking-skill/stargazers"><img src="https://img.shields.io/github/stars/atlas-doc/atlas-flight-booking-skill?style=flat" alt="GitHub Stars"></a>
+    <a href="LICENSE"><img src="https://img.shields.io/github/license/atlas-doc/atlas-flight-booking-skill" alt="Apache 2.0 许可证"></a>
   </p>
   <p>
     <a href="https://atlaslovestravel.com/?utm_source=skill"><img src="https://img.shields.io/badge/Website-atlaslovestravel.com-ffcd0a?labelColor=336699" alt="Atlas 官网"></a>
@@ -19,7 +19,13 @@
 
 [English](README.md)
 
-Atlas Flight Booking 是一套面向 Agent 的航班搜索与预订 CLI 和 Skill。它支持查询实时航班、验价、选择行李或座位、创建订单、余额支付和查询出票状态。
+安装 Skill 后，直接告诉 AI Agent 你要查询或预订的航班：
+
+```bash
+npx --yes skills add https://github.com/atlas-doc/atlas-flight-booking-skill --skill atlas-flight-booking
+```
+
+Atlas Flight Booking 是一套面向 Agent 的航班搜索与预订 Skill。它支持查询实时航班、验价、选择行李或座位、创建订单、余额支付和查询出票状态。
 
 Skill 负责对话流程和用户确认；`atlas-flight` CLI 负责授权、安全凭据存储、接口调用、统一输出和副作用保护。
 
@@ -38,11 +44,7 @@ Skill 负责对话流程和用户确认；`atlas-flight` CLI 负责授权、安�
 
 行李或座位不可用不会阻断主预订流程。当前版本不支持退票、取消、改签、信用卡支付或其他售后操作。
 
-## 安装 Skill
-
-```bash
-npx --yes skills add https://github.com/atlas-doc/atlas-flight-booking --skill atlas-flight-booking
-```
+## CLI 自动配置
 
 Skill 启动后会检查 CLI。如果没有安装，Agent 会在需要时通过 Astral 官方独立安装器自动安装 `uv`，然后执行 `uv tool install --python 3.12 atlas-flight-booking==0.3.9`，从 [PyPI](https://pypi.org/project/atlas-flight-booking/) 安装已发布的 Atlas CLI。用户不需要单独安装这两个工具；只有自动安装实际失败时，Agent 才会停止并提供简短的恢复说明。
 

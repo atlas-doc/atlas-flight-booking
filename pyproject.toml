@@ -33,9 +33,9 @@ atlas-flight = "atlas_cli.cli:app"
 
 [project.urls]
 Homepage = "https://atlaslovestravel.com/"
-Documentation = "https://github.com/atlas-doc/atlas-flight-booking#readme"
-Issues = "https://github.com/atlas-doc/atlas-flight-booking/issues"
-Repository = "https://github.com/atlas-doc/atlas-flight-booking.git"
+Documentation = "https://github.com/atlas-doc/atlas-flight-booking-skill#readme"
+Issues = "https://github.com/atlas-doc/atlas-flight-booking-skill/issues"
+Repository = "https://github.com/atlas-doc/atlas-flight-booking-skill.git"
 X = "https://x.com/AtlasLCC"
 LinkedIn = "https://www.linkedin.com/company/atlaslovestravel/"
 

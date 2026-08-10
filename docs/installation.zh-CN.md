@@ -7,7 +7,7 @@
 安装 Skill：
 
 ```bash
-npx --yes skills add https://github.com/atlas-doc/atlas-flight-booking --skill atlas-flight-booking
+npx --yes skills add https://github.com/atlas-doc/atlas-flight-booking-skill --skill atlas-flight-booking
 ```
 
 Skill 第一次需要使用 Atlas Flight Booking 时，会检查 `atlas-flight`。如果 CLI 尚未安装，Agent 会在需要时通过 Astral 官方独立安装器自动安装 `uv`，再安装 CLI、验证版本并继续原来的航班任务。它不会额外增加一轮对话许可；宿主环境仍可能显示自身的命令执行审批。普通用户通常不需要自己安装这两个工具。

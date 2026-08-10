@@ -7,7 +7,7 @@
 Install the Skill:
 
 ```bash
-npx --yes skills add https://github.com/atlas-doc/atlas-flight-booking --skill atlas-flight-booking
+npx --yes skills add https://github.com/atlas-doc/atlas-flight-booking-skill --skill atlas-flight-booking
 ```
 
 When the Skill first needs Atlas Flight Booking, it checks for `atlas-flight`. If the CLI is missing, the Agent automatically installs `uv` from Astral's official standalone installer when needed, installs the CLI, verifies the version, and resumes the original flight task. It does not add a conversational permission round-trip; the host may still display its own native execution approval. Users do not normally install either tool themselves.
