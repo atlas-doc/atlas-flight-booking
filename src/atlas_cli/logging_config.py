@@ -21,16 +21,13 @@ SENSITIVE_JSON_RE = re.compile(
     r'(?!<REDACTED>)[^"\r\n]*(?P<suffix>")',
     re.IGNORECASE,
 )
-INTERNAL_URL_RE = re.compile(r"https?://test1\.atrip(?:-restful)?\.yutu-api\.com[^\s]*", re.IGNORECASE)
-
-
 def redact_sensitive(value: str) -> str:
     redacted = JWT_RE.sub("<REDACTED>", value)
     redacted = AUTHORIZATION_URL_RE.sub("<REDACTED>", redacted)
     redacted = QUERY_TOKEN_RE.sub(r"\g<prefix><REDACTED>", redacted)
     redacted = HEADER_RE.sub(r"\g<prefix><REDACTED>", redacted)
     redacted = SENSITIVE_JSON_RE.sub(r"\g<prefix><REDACTED>\g<suffix>", redacted)
-    return INTERNAL_URL_RE.sub("<REDACTED>", redacted)
+    return redacted
 
 
 class SensitiveValueFilter(logging.Filter):
