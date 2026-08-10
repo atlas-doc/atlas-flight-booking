@@ -5,6 +5,7 @@
   <h1>Atlas Flight Booking</h1>
   <p>Agent-friendly live flight search and booking.</p>
   <p>
+    <a href="https://pypi.org/project/atlas-flight-booking/"><img src="https://img.shields.io/pypi/v/atlas-flight-booking?label=PyPI" alt="PyPI version"></a>
     <a href="https://github.com/atlas-doc/atlas-flight-booking/releases/latest"><img src="https://img.shields.io/github/v/release/atlas-doc/atlas-flight-booking?label=release" alt="Latest release"></a>
     <a href="https://github.com/atlas-doc/atlas-flight-booking/stargazers"><img src="https://img.shields.io/github/stars/atlas-doc/atlas-flight-booking?style=flat" alt="GitHub stars"></a>
     <a href="LICENSE"><img src="https://img.shields.io/github/license/atlas-doc/atlas-flight-booking" alt="Apache 2.0 license"></a>
@@ -44,6 +45,8 @@ npx --yes skills add https://github.com/atlas-doc/atlas-flight-booking --skill a
 ```
 
 The Skill checks for the CLI when it starts. If the CLI is missing, it explains the requirement and asks for permission before installing anything.
+
+After permission, the Agent installs the signed release from [PyPI](https://pypi.org/project/atlas-flight-booking/) with `uv tool install --python 3.12 atlas-flight-booking==0.3.8`. Users do not need to install the CLI separately.
 
 [Installation details and troubleshooting →](docs/installation.md)
 

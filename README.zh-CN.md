@@ -5,6 +5,7 @@
   <h1>Atlas Flight Booking</h1>
   <p>面向 Agent 的实时航班搜索与预订能力。</p>
   <p>
+    <a href="https://pypi.org/project/atlas-flight-booking/"><img src="https://img.shields.io/pypi/v/atlas-flight-booking?label=PyPI" alt="PyPI 版本"></a>
     <a href="https://github.com/atlas-doc/atlas-flight-booking/releases/latest"><img src="https://img.shields.io/github/v/release/atlas-doc/atlas-flight-booking?label=release" alt="最新版本"></a>
     <a href="https://github.com/atlas-doc/atlas-flight-booking/stargazers"><img src="https://img.shields.io/github/stars/atlas-doc/atlas-flight-booking?style=flat" alt="GitHub Stars"></a>
     <a href="LICENSE"><img src="https://img.shields.io/github/license/atlas-doc/atlas-flight-booking" alt="Apache 2.0 许可证"></a>
@@ -44,6 +45,8 @@ npx --yes skills add https://github.com/atlas-doc/atlas-flight-booking --skill a
 ```
 
 Skill 启动后会检查 CLI。如果没有安装，它会先解释用途并征得用户同意，不会擅自安装软件。
+
+获得同意后，Agent 会通过 `uv tool install --python 3.12 atlas-flight-booking==0.3.8` 从 [PyPI](https://pypi.org/project/atlas-flight-booking/) 安装已发布版本，用户不需要单独安装 CLI。
 
 [安装详情与故障排查 →](docs/installation.zh-CN.md)
 
