@@ -186,7 +186,7 @@ class SearchStore:
                 offers={
                     item.offer_id: item.offer.upstream_identifier
                     for item in stored.offers
-                    if item.offer.bookable and item.offer.upstream_identifier is not None
+                    if item.offer.price_status == "current" and item.offer.upstream_identifier is not None
                 },
             )
             self._save_and_validate_secret(secret_ref, workflow_secret)
@@ -274,7 +274,7 @@ class SearchStore:
             self._raise_expired()
         if secret is None:
             self._raise_expired()
-        expected_keys = {offer.offer_id for offer in persisted.offers if offer.bookable}
+        expected_keys = {offer.offer_id for offer in persisted.offers if offer.price_status == "current"}
         if (
             secret.search_id != persisted.search_id
             or secret.generation != persisted.route_generation

@@ -252,18 +252,24 @@ def test_verify_increase_requires_fresh_confirmation(tmp_path: Path) -> None:
     assert confirmed.data == result.data
 
 
-@pytest.mark.parametrize(
-    "searched",
-    [
-        offer(100, bookable=False),
-        offer(100, bookable=False, price_status="reference", identifier=None),
-    ],
-)
-def test_reference_or_nonbookable_offer_never_calls_verify(
-    tmp_path: Path,
-    searched: NormalizedOffer,
-) -> None:
-    service, adapter, _, _, _, offer_id = make_service(tmp_path, searched=searched)
+def test_current_nonbookable_offer_can_verify_after_transaction_access_is_enabled(tmp_path: Path) -> None:
+    service, adapter, _, _, _, offer_id = make_service(
+        tmp_path,
+        searched=offer(100, bookable=False, price_status="current"),
+    )
+
+    result = service.verify(offer_id)
+
+    assert result.code == "OFFER_VERIFIED"
+    assert len(adapter.calls) == 1
+    assert adapter.calls[0][2] == "private-routing-token"
+
+
+def test_reference_offer_never_calls_verify(tmp_path: Path) -> None:
+    service, adapter, _, _, _, offer_id = make_service(
+        tmp_path,
+        searched=offer(100, bookable=False, price_status="reference", identifier=None),
+    )
 
     result = service.verify(offer_id)
 

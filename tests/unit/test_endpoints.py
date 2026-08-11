@@ -80,18 +80,33 @@ def test_sandbox_route_uses_standard_search_and_its_credential_slot() -> None:
     assert route.bookable is True
 
 
-def test_route_generation_changes_for_every_capability_boundary() -> None:
+def test_route_generation_tracks_route_identity_not_top_up_capability() -> None:
     resolver = EndpointResolver(settings())
-    routes = [
-        resolver.resolve_search(activation_status=1, top_up_completed=False, mode=CustomerMode.PROD),
-        resolver.resolve_search(activation_status=2, top_up_completed=False, mode=CustomerMode.PROD),
-        resolver.resolve_search(activation_status=3, top_up_completed=False, mode=CustomerMode.PROD),
-        resolver.resolve_search(activation_status=3, top_up_completed=True, mode=CustomerMode.PROD),
-        resolver.resolve_search(activation_status=3, top_up_completed=True, mode=CustomerMode.SANDBOX),
-    ]
+    pre_sale = resolver.resolve_search(activation_status=1, top_up_completed=False, mode=CustomerMode.PROD)
+    beta = resolver.resolve_search(activation_status=2, top_up_completed=False, mode=CustomerMode.PROD)
+    live_before_top_up = resolver.resolve_search(
+        activation_status=3,
+        top_up_completed=False,
+        mode=CustomerMode.PROD,
+    )
+    live_after_top_up = resolver.resolve_search(
+        activation_status=3,
+        top_up_completed=True,
+        mode=CustomerMode.PROD,
+    )
+    sandbox = resolver.resolve_search(
+        activation_status=3,
+        top_up_completed=True,
+        mode=CustomerMode.SANDBOX,
+    )
 
-    assert len({route.generation for route in routes}) == len(routes)
-    assert all(len(route.generation) == 24 for route in routes)
+    assert pre_sale.generation == beta.generation
+    assert live_before_top_up.generation == live_after_top_up.generation
+    assert len({pre_sale.generation, live_before_top_up.generation, sandbox.generation}) == 3
+    assert all(
+        len(route.generation) == 24
+        for route in (pre_sale, beta, live_before_top_up, live_after_top_up, sandbox)
+    )
 
 
 @pytest.mark.parametrize(

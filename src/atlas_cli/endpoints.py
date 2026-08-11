@@ -96,11 +96,10 @@ class EndpointResolver:
             bookable = activation_status == 3 and top_up_completed
 
         generation = self._generation(
-            activation_status=activation_status,
-            top_up_completed=top_up_completed,
             mode=mode,
             base_url=base_url,
             path=path,
+            provider=provider,
             credential_slot=credential_slot,
         )
         return SearchRoute(
@@ -153,21 +152,19 @@ class EndpointResolver:
     @staticmethod
     def _generation(
         *,
-        activation_status: int,
-        top_up_completed: bool,
         mode: CustomerMode,
         base_url: str,
         path: str,
+        provider: SearchProvider,
         credential_slot: CredentialSlot,
     ) -> str:
         canonical = json.dumps(
             {
-                "activation_status": activation_status,
                 "base_url": base_url,
                 "credential_slot": credential_slot.value,
                 "mode": mode.value,
                 "path": path,
-                "top_up_completed": top_up_completed,
+                "provider": provider.value,
             },
             separators=(",", ":"),
             sort_keys=True,

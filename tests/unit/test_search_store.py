@@ -184,6 +184,30 @@ def test_reference_offer_without_routing_secret_remains_listable(tmp_path: Path)
     assert secrets.searches["ssec_secrettoken12"].offers == {}
 
 
+def test_current_nonbookable_offer_retains_routing_secret_for_later_verification(tmp_path: Path) -> None:
+    secrets = FakeWorkflowSecretStore()
+    store = SearchStore(
+        tmp_path,
+        secrets=secrets,
+        token_factory=id_factory(["searchtoken", "secrettoken12", "offerone"]),
+    )
+    stored = store.save(
+        request(),
+        search(offer("private-route", 100, bookable=False, price_status="current")),
+        "g" * 24,
+    )
+
+    _, loaded = store.load_offer(stored.offers[0].offer_id, generation="g" * 24)
+
+    assert loaded.offer.bookable is False
+    assert loaded.offer.price_status == "current"
+    assert loaded.offer.upstream_identifier == "private-route"
+    assert secrets.searches["ssec_secrettoken12"].offers == {
+        stored.offers[0].offer_id: "private-route"
+    }
+    assert "private-route" not in (tmp_path / "searches.json").read_text(encoding="utf-8")
+
+
 def test_bookable_offer_is_hydrated_from_secure_record_only_in_memory(tmp_path: Path) -> None:
     secrets = FakeWorkflowSecretStore()
     store = SearchStore(

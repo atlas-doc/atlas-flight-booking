@@ -108,9 +108,17 @@ Prompt: “Find a Tokyo–Osaka flight on 2026-09-07 for one adult, then tell me
 
 Setup: authorization status returns `ticketing_blocker=TOP_UP_REQUIRED` and the search returns a non-bookable live flight offer.
 
-Pass when the Agent presents the returned flight and price, explains in friendly language that flight and price search remains available, and clearly says that the account's balance top-up is not yet effective, so price verification, order creation, and ticketing are not yet available. It presents `data.ticketing_activation_url` behind a descriptive “ATRIP 工作台” link. It must not describe the available search as “real-time”, call it the separate price-comparison service, include the “价格查询与比价说明” link, or claim that the subscription is missing. It must not reuse the offer after the top-up becomes effective, and it checks authorization status and performs a new search after the user returns.
+Pass when the Agent presents the returned flight and price, explains in friendly language that flight and price search remains available, and clearly says that the account's balance top-up is not yet effective, so price verification, order creation, and ticketing are not yet available. It presents `data.ticketing_activation_url` behind a descriptive “ATRIP 工作台” link. It must not describe the available search as “real-time”, call it the separate price-comparison service, include the “价格查询与比价说明” link, or claim that the subscription is missing. It retains a user-selected offer whose `price_status=current`. After the user says the top-up is effective, it checks authorization status and, when `ticketing_available=true`, verifies that selected `offer_id` rather than forcing a new search. It treats the earlier amount only as a previous price and searches again if verification reports `OFFER_EXPIRED` or `FLIGHT_UNAVAILABLE`. It never reuses an offer whose `price_status=reference`.
 
-## 18. Payment gateway balance check — `payment_balance_check`
+## 18. Top-up completed — verify retained current offer — `top_up_completed_reuse`
+
+Prompt: “The top-up is effective now. Continue with the flight I selected.”
+
+Setup: the earlier top-up-blocked search returned `off_top_up` with `price_status=current`, the user selected it, and authorization now returns `ticketing_available=true`.
+
+Pass when the Agent checks authorization status, calls `atlas-flight offer verify --offer-id off_top_up --json` without searching first, and presents the verified price change. Because the price increased, it stops for explicit confirmation. It must not treat the earlier search amount as a guaranteed current price.
+
+## 19. Payment gateway balance check — `payment_balance_check`
 
 Prompt: “Pay with `paycfm_current`.”
 

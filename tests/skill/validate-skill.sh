@@ -72,11 +72,11 @@ check_structure_and_contracts() {
     fail "authorization URL provenance is not explicit"
   rg -Fiq 'retain the pending authorization session' "$error_ref" ||
     fail "auth service outage must retain pending session"
-  rg -Fq 'uv tool install --force --python 3.12 atlas-flight-booking==0.3.11' "$skill_dir/SKILL.md" ||
+  rg -Fq 'uv tool install --force --python 3.12 atlas-flight-booking==0.3.12' "$skill_dir/SKILL.md" ||
     fail "missing exact PyPI CLI installation command"
   for phrase in \
     'minimum supported CLI version' \
-    'version is older than `0.3.11`' \
+    'version is older than `0.3.12`' \
     'never downgrade a newer CLI' \
     'installation or upgrade actually fails'; do
     rg -Fiq "$phrase" "$skill_dir/SKILL.md" ||
@@ -146,7 +146,7 @@ check_structure_and_contracts() {
     'continue searching flights and prices' \
     'balance top-up is not yet complete' \
     '当前账户可以继续查询航班和价格，但充值状态尚未生效' \
-    '查看充值状态；状态更新后，我会重新检查并搜索可预订报价' \
+    '查看充值状态；状态更新后，我会重新检查；如果你已选择某个报价，我会先核价确认最新价格' \
     'price verification, order creation, and ticketing are not yet available' \
     'Do not describe these results as the separate price-comparison service' \
     'Do not expose internal product labels' \
@@ -258,9 +258,9 @@ fixture_rejects() {
 check_fixture() {
   for scenario in happy_path auth_required no_results search_limit search_retryable comparison_only offer_expired \
     auth_service_unavailable price_decreased price_increased baggage_unavailable seat_unavailable \
-    passenger_required contact_invalid order_ready order_without_link payment_unknown payment_balance_check ticketing_pending ticketed subscription_required top_up_required; do
+    passenger_required contact_invalid order_ready order_without_link payment_unknown payment_balance_check ticketing_pending ticketed subscription_required top_up_required top_up_completed_reuse; do
     version="$(PATH="$PWD/tests/skill/fixtures:$PATH" ATLAS_TEST_SCENARIO="$scenario" atlas-flight --version)"
-    test "$version" = 'atlas-flight 0.3.11' || fail "inconsistent plain-text version for $scenario: $version"
+    test "$version" = 'atlas-flight 0.3.12' || fail "inconsistent plain-text version for $scenario: $version"
   done
 
   fixture_json auth_required AUTHORIZATION_REQUIRED auth status --json
@@ -277,6 +277,8 @@ check_fixture() {
   fixture_json comparison_only FLIGHT_SEARCHED search --origin TYO --destination OSA --depart 2026-09-07 --adults 1 --json
   fixture_json top_up_required AUTHORIZED auth status --json
   fixture_json top_up_required FLIGHT_SEARCHED search --origin TYO --destination OSA --depart 2026-09-07 --adults 1 --json
+  fixture_json top_up_completed_reuse AUTHORIZED auth status --json
+  fixture_json top_up_completed_reuse OFFER_VERIFIED offer verify --offer-id off_top_up --json
   fixture_json offer_expired OFFER_EXPIRED offer list --search-id srch_old --json
   fixture_json subscription_required SUBSCRIPTION_REQUIRED offer verify --offer-id off_example --json
   fixture_json price_decreased OFFER_VERIFIED offer verify --offer-id off_example --json

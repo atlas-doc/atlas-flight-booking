@@ -18,7 +18,7 @@ invalid_argument() {
 
 case "${scenario}:${command_line}" in
   *:'--version')
-    emit 'atlas-flight 0.3.11'
+    emit 'atlas-flight 0.3.12'
     ;;
   auth_required:'auth status --json')
     emit '{"schema_version":"1","status":"action_required","code":"AUTHORIZATION_REQUIRED","message":"Authorization required","retryable":false,"data":{"authenticated":false},"details":{}}'
@@ -51,7 +51,13 @@ case "${scenario}:${command_line}" in
     emit '{"schema_version":"1","status":"success","code":"AUTHORIZED","message":"Authorized","retryable":false,"data":{"authenticated":true,"search_available":true,"ticketing_available":false,"ticketing_activation_url":"https://www.atriptech.com/#/workspace","ticketing_blocker":"TOP_UP_REQUIRED"},"details":{}}'
     ;;
   top_up_required:'search --origin TYO --destination OSA --depart 2026-09-07 --adults 1 --json')
-    emit '{"schema_version":"1","status":"success","code":"FLIGHT_SEARCHED","message":"Search complete","retryable":false,"data":{"search_id":"srch_top_up","offer_count":1,"offers":[{"offer_id":"off_top_up","total_price":46.00,"currency":"USD","bookable":false,"price_status":"reference","ancillary_supported":[]}]},"details":{}}'
+    emit '{"schema_version":"1","status":"success","code":"FLIGHT_SEARCHED","message":"Search complete","retryable":false,"data":{"search_id":"srch_top_up","offer_count":1,"offers":[{"offer_id":"off_top_up","total_price":46.00,"currency":"USD","bookable":false,"price_status":"current","ancillary_supported":[]}]},"details":{}}'
+    ;;
+  top_up_completed_reuse:'auth status --json')
+    emit '{"schema_version":"1","status":"success","code":"AUTHORIZED","message":"Authorized","retryable":false,"data":{"authenticated":true,"search_available":true,"ticketing_available":true},"details":{}}'
+    ;;
+  top_up_completed_reuse:'offer verify --offer-id off_top_up --json')
+    emit '{"schema_version":"1","status":"success","code":"OFFER_VERIFIED","message":"Offer verified","retryable":false,"data":{"booking_id":"book_top_up","previous_price":46.00,"current_price":47.00,"currency":"USD","price_change":"increased","requirements":{"required_fields":["name","passenger_type","gender"]},"travelers":[{"traveler_id":"trav_1","passenger_type":"adult"}],"segments":[{"segment_id":"seg_1","segment_index":1}],"baggage_supported":false,"seat_supported":false},"details":{}}'
     ;;
   offer_expired:'offer list --search-id srch_old --json'|offer_expired:'offer verify --offer-id off_old --json')
     emit '{"schema_version":"1","status":"terminal_error","code":"OFFER_EXPIRED","message":"Offer expired; search again","retryable":false,"data":{},"details":{}}' 30

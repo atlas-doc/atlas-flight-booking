@@ -332,7 +332,7 @@ class VerifyService:
 
     @staticmethod
     def _routing_identifier(offer: NormalizedOffer) -> str:
-        if offer.price_status == "reference" or not offer.bookable:
+        if offer.price_status != "current":
             raise AccessManagerError(
                 code="SUBSCRIPTION_REQUIRED",
                 message="Subscription required",
