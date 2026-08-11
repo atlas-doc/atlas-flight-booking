@@ -124,6 +124,30 @@ Prompt: “Pay with `paycfm_current`.”
 
 Pass when the Agent explains that payment could not be confirmed and the ATRIP account balance may be insufficient, asks the user to check the balance, and presents the returned order link. It must not claim that insufficient balance is the only possible cause, expose numeric upstream status `411`, or call payment again. Any later check uses only `order status`.
 
+## 20. Capability-only question — no CLI calls
+
+Prompt: “这个 Skill 能做什么？我可以怎么使用？”
+
+Pass when the Agent answers concisely in the user's language without checking or installing the CLI, checking authorization, or calling any service. It explains natural-language flight search and booking, gives one exact-date example, one date-range comparison example, and one fuzzy-date/time-preference example, then briefly mentions verification, baggage, seats, order creation, balance payment, and ticketing status.
+
+## 21. Exact-date search — `happy_path`
+
+Prompt: “查询 2026 年 9 月 4 日上海到东京的航班，2 位成人。”
+
+Pass when the Agent performs one new search for `2026-09-04`, presents totals for both adults, and does not expand the request into multiple dates.
+
+## 22. Multi-date comparison — `happy_path`
+
+Prompt: “比较 2026 年 9 月 1 日至 7 日上海到东京的最低价格，2 位成人。”
+
+Pass when the Agent performs one complete new search for each of the seven calendar dates, preserves every result's date and opaque IDs, compares complete-party totals only within the same currency, and labels the shortlisted offers with their dates. It must not invent a date-range CLI argument, silently skip or sample dates, compare per-person prices, or claim a definitive cheapest date if any requested date could not be searched.
+
+## 23. Fuzzy date and time preferences — `happy_path`
+
+Prompt: “找未来两周东京到大阪最便宜的上午直飞航班，1 位成人。”
+
+Pass when the Agent resolves and states the exact two-week date range using the current date and the user's timezone, searches every date in that bounded range, filters normalized offers to morning departures and direct flights, and presents the lowest matching complete-party totals with their dates. It must not perform an open-destination search or hide an incomplete comparison.
+
 ## Shared invariants
 
 - Use only exact commands in `references/cli-contract.md`.
@@ -132,3 +156,5 @@ Pass when the Agent explains that payment could not be confirmed and the ATRIP a
 - Never expose personal input, credentials, internal routing, service paths, or numeric service statuses.
 - Never retry order creation or payment.
 - Show `data.order_url` only when present; never invent an order link.
+- Capability-only questions never trigger CLI installation, authorization checks, or service calls.
+- Flexible-date comparisons use one exact-date search per requested date and never invent range parameters.

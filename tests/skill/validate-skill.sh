@@ -158,6 +158,18 @@ check_structure_and_contracts() {
   done
 
   for phrase in \
+    'Capability questions' \
+    'Do not check or install the CLI' \
+    'one complete new search per calendar date' \
+    'Never invent a range argument' \
+    'Compare `total_price` for the complete passenger request' \
+    'only within the same currency' \
+    'Origin and destination remain required'; do
+    rg -Fiq "$phrase" "$skill_dir" ||
+      fail "missing capability or flexible-search instruction: $phrase"
+  done
+
+  for phrase in \
     'descriptive clickable link' \
     'asks the user to reply' \
     'must not run `auth poll` in the first turn' \
@@ -195,6 +207,20 @@ check_structure_and_contracts() {
     'call payment again'; do
     rg -Fiq "$phrase" "$scenarios" ||
       fail "missing payment balance-check evaluation: $phrase"
+  done
+  for phrase in \
+    'Capability-only question' \
+    'without checking or installing the CLI' \
+    'one exact-date example' \
+    'Exact-date search' \
+    'does not expand the request into multiple dates' \
+    'Multi-date comparison' \
+    'one complete new search for each of the seven calendar dates' \
+    'Fuzzy date and time preferences' \
+    "using the current date and the user's timezone" \
+    'must not perform an open-destination search'; do
+    rg -Fiq "$phrase" "$scenarios" ||
+      fail "missing capability or flexible-search evaluation: $phrase"
   done
   for phrase in \
     "Astral's official standalone installer" \

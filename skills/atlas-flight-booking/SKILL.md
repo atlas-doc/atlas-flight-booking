@@ -1,11 +1,27 @@
 ---
 name: atlas-flight-booking
-description: Use when a user wants to authorize Atlas, search or compare flights, verify a current fare, choose baggage or seats, create and pay for an order, or check ticketing status.
+description: Use when a user asks what Atlas Flight Booking can do, wants to authorize Atlas, search or compare flights using exact or flexible dates and time preferences, verify a current fare, choose baggage or seats, create and pay for an order, or check ticketing status.
 ---
 
 # Atlas Flight Booking
 
 Operate through the Atlas Flight Booking CLI only. Preserve every opaque ID exactly. Branch on response `code`, never `message`, and present only normalized CLI fields.
+
+## Capability questions
+
+When the user only asks what this Skill can do or how to use it, answer directly in the user's language. Do not check or install the CLI, check authorization, or call any service. Keep the answer concise and use the following structure or its natural equivalent:
+
+“Atlas Flight Booking 支持使用自然语言查询和预订航班。你可以提供准确日期，也可以描述日期范围、时间偏好或价格要求；我会搜索并比较符合条件的航班。
+
+例如：
+
+- ‘查询 9 月 4 日上海到东京的航班。’
+- ‘比较 9 月 1 日至 7 日上海到东京的最低价格。’
+- ‘找未来两周东京到大阪最便宜的上午直飞航班。’
+
+选定航班后，还可以继续核价、选择行李和座位、创建订单、余额支付并查询出票状态。涉及涨价、座位替代或支付时，会先获得你的确认。”
+
+Do not enumerate implementation details or unsupported after-sales operations unless the user asks for more detail.
 
 ## Start
 
@@ -23,6 +39,12 @@ Then run `atlas-flight auth status --json`. Retain `data.ticketing_activation_ur
 ## Search and booking
 
 Collect missing search inputs, search, and list offers. When the retained `data.ticketing_blocker` is `TOP_UP_REQUIRED`, explain in friendly language that the account can continue searching flights and prices, but its balance top-up is not yet complete, so price verification, order creation, and ticketing are not yet available. Do not describe this availability as “real-time.” When `data.ticketing_activation_url` is returned, use this Chinese wording: “当前账户可以继续查询航班和价格，但充值状态尚未生效，因此暂时不能继续核价、创建订单或出票。你可以前往 [ATRIP 工作台]({ticketing_activation_url})查看充值状态；状态更新后，我会重新检查；如果你已选择某个报价，我会先核价确认最新价格。” Use the returned URL for `{ticketing_activation_url}`. Retain a selected offer whose `price_status=current`. After the user says the top-up is effective, check authorization status. If `data.ticketing_available=true`, verify that selected `offer_id` even when its earlier search result had `bookable=false`; that flag described availability at search time and does not itself require a new search. Treat the earlier amount only as the previous price. Search again only when no current-price offer was selected or verification returns `OFFER_EXPIRED` or `FLIGHT_UNAVAILABLE`. Never reuse an offer whose `price_status=reference`. Do not describe these results as the separate price-comparison service or include its documentation link.
+
+### Flexible search
+
+Resolve relative or fuzzy dates against the current date and the user's timezone. Present the interpreted absolute dates with the results. For one exact departure date, run one new search. For a bounded list or date range, run one complete new search per calendar date, retain each date's `search_id` and offer IDs separately, and merge the normalized results only after every requested date has been attempted. Never invent a range argument, replay one date as another date, silently sample dates, or claim a definitive cheapest result when part of the comparison failed.
+
+Compare `total_price` for the complete passenger request, not a per-person amount. Compare prices directly only within the same currency; group or clearly separate other currencies. Apply requested departure-time, direct-flight, airport, or airline preferences to the normalized offers, and state the dates represented in the final shortlist. Origin and destination remain required; do not turn a missing destination into an open-ended “anywhere” search. Preserve the selected offer's original date and opaque IDs before continuing to verification or booking.
 
 Otherwise, when an offer has `price_status=reference`, describe the results to the user as real-time flight price search and comparison only. State that they do not support continued price verification or ticketing, and include a descriptive link to `https://resources.atriptech.com/api-wen-dang/api-reference/booking-apis/price-compare-search#price-compare-search` labeled “价格查询与比价说明” in Chinese or its natural equivalent in the user's language. When authorization returned `ticketing_available=false`, `data.ticketing_blocker=TICKETING_ACTIVATION_REQUIRED`, and `data.ticketing_activation_url`, also explain that the user can open the returned URL through a descriptive “ATRIP 工作台” link, complete the unfinished activation steps shown there, then return so the Agent can check status and run a new search. Do not guess whether the unfinished step is email verification, subscription, or access approval. Do not imply that a comparison-only offer can later be purchased or reuse its ID after activation. Do not expose internal product labels. Otherwise, verify only an `offer_id` returned by the CLI. Tell the user when the verified price decreases. Obtain new explicit confirmation when the verified price increases.
 

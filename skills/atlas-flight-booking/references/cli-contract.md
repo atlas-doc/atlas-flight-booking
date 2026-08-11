@@ -39,6 +39,8 @@ On `AUTHORIZED`, retain `data.ticketing_available` and the optional `data.ticket
 
 The new-search command also accepts `--return-date {YYYY-MM-DD}`, `--children {count}`, `--infants {count}`, repeated `--airline {IATA}`, `--currency {currency}`, and `--multiple-fare-families` before `--json`. Require origin, destination, departure date, and adult count together. Replay only a search retained by the CLI.
 
+Each new-search command accepts exactly one departure date and, optionally, one return date. Flexible-date and multi-date comparisons are Agent-side orchestration: issue one complete new-search command for every requested departure date or bounded date pair, and retain each response's date, `search_id`, and offer IDs separately. Never construct unsupported date-range arguments.
+
 ## Optional services
 
 | Operation | Exact command |

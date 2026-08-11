@@ -3,6 +3,7 @@
     <img src="assets/atlas-logo.svg" alt="Atlas" width="180">
   </a>
   <h1>Atlas Flight Booking Skill</h1>
+  <img src="assets/flight-hero.gif" alt="Atlas Flight Booking 航班预订流程动画" width="900">
   <p>让 AI Agent 搜索、核价并预订实时机票。</p>
   <p>
     <a href="https://pypi.org/project/atlas-flight-booking/"><img src="https://img.shields.io/pypi/v/atlas-flight-booking?label=PyPI" alt="PyPI 版本"></a>
