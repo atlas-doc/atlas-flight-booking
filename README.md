@@ -3,7 +3,6 @@
     <img src="assets/atlas-logo.svg" alt="Atlas" width="180">
   </a>
   <h1>Atlas Flight Booking Skill</h1>
-  <img src="assets/flight-hero.gif" alt="Atlas Flight Booking workflow animation" width="900">
   <p>Live flight search and booking for AI agents.</p>
   <p>
     <a href="https://pypi.org/project/atlas-flight-booking/"><img src="https://img.shields.io/pypi/v/atlas-flight-booking?label=PyPI" alt="PyPI version"></a>
